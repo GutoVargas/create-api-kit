@@ -1,15 +1,28 @@
 import type { Request, Response, NextFunction } from 'express';
 import { pool } from '../databases/postgres.ts';
 
-export function journal(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+function sanitizeBody(body: unknown): unknown {
+  if (!body || typeof body !== 'object') return body;
+  
+  const sanitized = { ...(body as Record<string, unknown>) };
+  const sensitiveKeys = ['password', 'token', 'secret', 'authorization', 'accessToken'];
+  
+  for (const key of sensitiveKeys) {
+    if (key in sanitized) {
+      sanitized[key] = '***';
+    }
+  }
+  
+  return sanitized;
+}
+
+export function journal(req: Request, res: Response, next: NextFunction) {
   const start = Date.now();
 
   res.on('finish', async () => {
     try {
+      const sanitizedBody = sanitizeBody(req.body);
+
       await pool.query(
         `
           INSERT INTO api_journal (
@@ -28,7 +41,7 @@ export function journal(
           res.statusCode,
           req.ip,
           req.get('user-agent') ?? null,
-          req.body ?? null,
+          JSON.stringify(sanitizedBody),
         ],
       );
 

@@ -1,24 +1,29 @@
 {
-  "name": "api_backend",
+  "name": "{{PROJECT_NAME}}",
   "version": "1.0.0",
-  "description": "API for portifolio",
-  "license": "ISC",
-  "author": "Gustavo Luis de Vargas",
+  "description": "API gerada via create-api-kit",
+  "main": "dist/server.js",
   "type": "module",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node index.ts"
+    "scripts": {
+    "dev": "tsx watch server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "migrate": "tsx ./databases/migrate.ts"
   },
   "dependencies": {
-    "dotenv": "^18.0.4",
-    "express": "^5.2.1",
-    "pg": "^8.23.0"
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg": "^8.11.5",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6",
-    "@types/node": "^26.6.3",
-    "@types/pg": "^8.23.1",
-    "typescript": "^7.0.2"
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.7",
+    "@types/pg": "^8.11.5",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.5"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
   }
 }
