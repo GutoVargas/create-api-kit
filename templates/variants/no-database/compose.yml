@@ -1,0 +1,11 @@
+services:
+  api:
+    build: .
+    env_file: .env
+    ports:
+      - "${PORT:-3000}:3000"
+    networks: [internal]
+    init: true
+networks:
+  internal:
+    internal: true
