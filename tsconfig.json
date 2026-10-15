@@ -1,12 +1,32 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "nodenext",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": ".",
+    "outDir": "dist",
     "rewriteRelativeImportExtensions": true,
-    "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
-    "noEmit": true,
     "strict": true,
-    "skipLibCheck": true
-  }
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "*.ts",
+    "config/**/*.ts",
+    "databases/**/*.ts",
+    "middlewares/**/*.ts",
+    "controllers/**/*.ts",
+    "services/**/*.ts",
+    "repositories/**/*.ts",
+    "models/**/*.ts",
+    "schemas/**/*.ts",
+    "errors/**/*.ts",
+    "types/**/*.d.ts",
+    "routes/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
 }
