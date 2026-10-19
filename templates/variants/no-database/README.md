@@ -11,10 +11,10 @@ npm run dev
 ```
 
 <!-- OPENAPI_ONLY_START -->
-Com o servidor em execução, abra [http://localhost:3000/docs](http://localhost:3000/docs) no navegador. Expanda uma operação e use **Try it out** e **Execute** para enviar requisições e ver as respostas. Esta variante inclui somente `/` e `/health`; ao criar endpoints, adicione as rotas e atualize `openapi.ts`. A especificação OpenAPI também pode ser consultada em `/docs.json`.
+Com o servidor em execução, abra [http://localhost:3000/docs](http://localhost:3000/docs) no navegador. Expanda uma operação e use **Try it out** e **Execute** para enviar requisições e ver as respostas. Esta variante começa com `/` e `/health`; adicione seus endpoints criando arquivos `*.route.ts` e registre as operações em `openapi.ts`. A especificação OpenAPI também pode ser consultada em `/docs.json`.
 <!-- OPENAPI_ONLY_END -->
 <!-- NO_OPENAPI_START -->
-Esta API inicia sem OpenAPI, Swagger UI ou Zod e não instala dependências de documentação ou Zod. Para adicionar endpoints, crie as rotas e valide entradas com parsers manuais.
+Esta API inicia sem OpenAPI, Swagger UI ou Zod e não instala dependências de documentação ou Zod. Para adicionar endpoints, crie arquivos `*.route.ts` e valide entradas com parsers manuais.
 <!-- NO_OPENAPI_END -->
 
 Para compilar e executar a versão de produção, use `npm run build` e `npm start`. Também é possível executar a API em container com `docker compose up --build`.
@@ -32,13 +32,14 @@ Para compilar e executar a versão de produção, use `npm run build` e `npm sta
 ├── middlewares/
 │   ├── error-handler.ts      # Contrato padronizado de erro
 │   └── validate.ts           # Utilitário de validação para novas rotas
-├── routes/                   # Adicione aqui os routers da API
+├── routes/
+│   └── loader.ts             # Registra automaticamente arquivos *.route.ts
 ├── types/express.d.ts        # Extensões dos tipos Express
 ├── Dockerfile
 └── compose.yml
 ```
 
-Não são gerados módulos de banco, migrations, journal de banco ou CRUD de exemplo. O endpoint `GET /health` retorna `{ "status": "ok", "database": "not_configured" }`. A estrutura pode ser ampliada com controllers, services, repositories e models quando o domínio da aplicação for definido.
+Não são gerados módulos de banco, migrations, journal de banco ou CRUD de exemplo. O endpoint `GET /health` retorna `{ "status": "ok", "database": "not_configured" }`. Crie um router em `routes/<recurso>.route.ts`, exporte `routePath` e o router como `default`; o carregador o registra automaticamente, sem editar `app.ts`. A estrutura pode ser ampliada com controllers, services, repositories e models quando o domínio da aplicação for definido.
 
 ## Configuração
 

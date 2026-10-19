@@ -1,0 +1,35 @@
+# create-api-kit
+
+> A CLI that scaffolds secure REST APIs with Express and TypeScript, with optional PostgreSQL and optional OpenAPI/Swagger UI plus Zod.
+
+## Project
+
+- Repository: https://github.com/GutoVargas/create-api-kit
+- npm package: https://www.npmjs.com/package/create-api-kit
+- Install/run: `npx create-api-kit`
+- Minimum Node.js version: 20
+
+## What it generates
+
+- An Express and TypeScript API with security middleware and a documented folder structure.
+- Optional PostgreSQL persistence, SQL migrations, CRUD example, and request journal.
+- Optional OpenAPI specification, Swagger UI at `/docs`, and Zod validation.
+- Disabled integrations are removed from the generated project, including their dependencies.
+
+## Quick start
+
+```sh
+npx create-api-kit
+cd <project-folder>
+cp .env.example .env
+docker compose up --build
+```
+
+For PostgreSQL projects, set `DB_PASSWORD` in `.env`. CORS blocks origins by default; configure `ALLOWED_ORIGINS` to allow trusted browser origins. Without PostgreSQL, the generated Compose file starts only the API. Without OpenAPI, Swagger and Zod are not installed.
+
+## Documentation
+
+- [English README](README.md)
+- [Portuguese README](README.pt-BR.md)
+- [Contribution guide](CONTRIBUTING.md)
+- Generated API instructions: `templates/default/README.md` and `templates/variants/no-database/README.md`

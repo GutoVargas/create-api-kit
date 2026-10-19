@@ -6,10 +6,11 @@ import cors from 'cors';
 import { rateLimit } from 'express-rate-limit';
 import hpp from 'hpp';
 import { randomUUID } from 'node:crypto';
+import { loadApiRoutes } from './routes/loader.js';
 {{OPENAPI_IMPORTS}}
 
 /** Configura a API sem conexão de banco e registra as rotas básicas. */
-export function createApp(): Express {
+export async function createApp(): Promise<Express> {
   const app: Express = express();
   app.disable('x-powered-by');
   app.use(assignRequestId);
@@ -27,6 +28,7 @@ export function createApp(): Express {
 
   app.get('/health', healthCheck);
   app.get('/', home);
+  await loadApiRoutes(app);
 {{OPENAPI_ROUTES}}
   app.use(notFound);
   app.use(errorHandler);

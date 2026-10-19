@@ -8,10 +8,13 @@ import { validateRequest } from '../middlewares/validate.js';
 const router = Router();
 const controller = new ItemController(new ItemService(new ItemRepository()));
 
+/** Prefixo usado pelo carregador automático para registrar as rotas de itens. */
+export const routePath = '/items';
+
 router.get('/', controller.list);
 router.post('/', validateRequest({ body: createItemSchema }), controller.create);
 router.get('/:id', validateRequest({ params: itemIdSchema }), controller.get);
 router.put('/:id', validateRequest({ params: itemIdSchema, body: createItemSchema }), controller.update);
 router.delete('/:id', validateRequest({ params: itemIdSchema }), controller.delete);
 
-export { router as itemsRouter };
+export default router;

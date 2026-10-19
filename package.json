@@ -1,14 +1,41 @@
 {
   "name": "create-api-kit",
   "version": "1.0.0",
-  "description": "Gerador de APIs Express, TypeScript e PostgreSQL",
+  "description": "Scaffold secure Express and TypeScript REST APIs with optional PostgreSQL and OpenAPI/Zod",
+  "keywords": [
+    "express",
+    "typescript",
+    "api",
+    "rest-api",
+    "api-generator",
+    "scaffold",
+    "starter",
+    "postgresql",
+    "openapi",
+    "swagger",
+    "zod",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GutoVargas/create-api-kit.git"
+  },
+  "homepage": "https://github.com/GutoVargas/create-api-kit#readme",
+  "bugs": {
+    "url": "https://github.com/GutoVargas/create-api-kit/issues"
+  },
   "bin": {
     "create-api-kit": "bin/create-api-kit.js"
   },
   "files": [
     "bin/",
     "templates/default/",
-    "templates/variants/"
+    "templates/variants/",
+    "README.md",
+    "README.pt-BR.md",
+    "CONTRIBUTING.md",
+    "CHANGELOG.md",
+    "llms.txt"
   ],
   "engines": {
     "node": ">=20"

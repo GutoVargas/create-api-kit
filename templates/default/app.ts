@@ -7,12 +7,12 @@ import helmet from 'helmet';
 import cors from 'cors';
 import { rateLimit } from 'express-rate-limit';
 import hpp from 'hpp';
-import { itemsRouter } from './routes/items.js';
+import { loadApiRoutes } from './routes/loader.js';
 import { randomUUID } from 'node:crypto';
 {{OPENAPI_IMPORTS}}
 
 /** Monta o Express, configura a segurança global e registra as rotas da API. */
-export function createApp(): Express {
+export async function createApp(): Promise<Express> {
   const app: Express = express();
   app.disable('x-powered-by');
   app.use(assignRequestId);
@@ -35,7 +35,7 @@ export function createApp(): Express {
 
 {{OPENAPI_ROUTES}}
 
-  app.use('/items', itemsRouter);
+  await loadApiRoutes(app);
 
   app.use(notFound);
 

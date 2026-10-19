@@ -45,7 +45,7 @@ npm run dev
 5. Para desenvolver, adicione schemas em `schemas/`, implemente as camadas da aplicação e registre a operação em `openapi.ts`. Reinicie o servidor de desenvolvimento e atualize `/docs`.
 <!-- OPENAPI_ONLY_END -->
 <!-- NO_OPENAPI_START -->
-3. A API inicia sem OpenAPI, Swagger UI ou Zod. A validação do CRUD de exemplo usa parsers manuais em `schemas/` e continua retornando erros 400 para entradas inválidas.
+3. A API inicia sem OpenAPI, Swagger UI ou Zod. Valide entradas com parsers manuais em `schemas/`.
 4. Para desenvolver, adicione parsers em `schemas/`, implemente as camadas da aplicação e registre as rotas. A opção sem essa feature não instala dependências de documentação ou Zod.
 <!-- NO_OPENAPI_END -->
 
@@ -72,6 +72,10 @@ A especificação OpenAPI em JSON também fica disponível em `/docs.json`. A ro
 │   ├── error-handler.ts         # Resposta padronizada para erros
 │   ├── journal.ts               # Auditoria das requisições
 │   └── validate.ts              # Utilitário de validação das entradas
+├── routes/
+│   ├── loader.ts                 # Descobre e registra *.route.ts automaticamente
+<!-- CRUD_ONLY_START -->
+│   └── items.route.ts            # Router de exemplo registrado pelo carregador
 ├── controllers/
 │   └── item-controller.ts       # HTTP: traduz request em chamada de serviço
 ├── services/
@@ -84,9 +88,7 @@ A especificação OpenAPI em JSON também fica disponível em `/docs.json`. A ro
 │   └── item-schemas.ts          # Validação de entrada; Zod na opção OpenAPI
 ├── errors/
 │   └── app-error.ts             # Erros de aplicação com status e código
-├── routes/
-│   ├── items.ts                 # Rotas e composição das dependências
-│   └── journal.ts               # Ponto de extensão para rotas do journal
+<!-- CRUD_ONLY_END -->
 ├── types/
 │   └── express.d.ts             # Extensões dos tipos do Express
 ├── Dockerfile
@@ -97,28 +99,54 @@ A especificação OpenAPI em JSON também fica disponível em `/docs.json`. A ro
 
 ### Arquitetura e responsabilidades
 
-O fluxo da requisição é `routes → middlewares → controller → service → repository → PostgreSQL`; a resposta percorre o caminho de volta. `app.ts` registra as rotas e os middlewares globais.
+Quando um recurso segue a arquitetura em camadas, o fluxo é `routes → middlewares → controller → service → repository → PostgreSQL`; a resposta percorre o caminho de volta. `app.ts` registra as rotas encontradas e os middlewares globais.
 
 - **Routes:** declaram caminhos HTTP, aplicam schemas e encaminham para o controller. Não contêm regras de negócio nem SQL.
 - **Controllers:** leem valores validados, chamam um serviço e definem status e formato HTTP. Encaminham erros com `next(error)`.
 - **Services:** implementam regras de negócio e coordenam transações quando uma operação grava dados.
 - **Repositories:** isolam as consultas SQL e convertem registros do banco em entidades.
-- **Models:** representam entidades e protegem seus invariantes. `Item` mantém campos privados (`_id`, `_name`, `_createdAt`), expõe getters e setters e valida os valores atribuídos. `toJSON()` define o formato enviado pela API.
+- **Models:** representam entidades e protegem seus invariantes. No CRUD de exemplo, `Item` mantém campos privados (`_id`, `_name`, `_createdAt`), expõe getters e setters e valida os valores atribuídos. `toJSON()` define o formato enviado pela API.
 - **Schemas:** definem os formatos permitidos para body, params e query com Zod na opção OpenAPI ou parsers manuais na opção sem OpenAPI.
-- **Errors:** `AppError` carrega status HTTP e código de erro sem misturar detalhes de transporte com SQL.
+- **Errors:** a camada de erros pode carregar status HTTP e códigos sem misturar detalhes de transporte com SQL.
 
 Toda função, método, getter, setter e callback nomeado deve ter um comentário JSDoc imediatamente acima descrevendo seu propósito. Documente também parâmetros, retorno e efeitos colaterais quando não forem evidentes pela assinatura.
 
-### Adicionar um recurso
+### Adicionar e registrar rotas dinamicamente
+
+O carregador procura automaticamente arquivos `*.route.ts` dentro de `routes/` (em produção, `*.route.js`). Cada arquivo deve exportar `routePath` e um router como exportação padrão. Assim, não é necessário editar `app.ts` para montar um novo router.
+
+Exemplo de `routes/products.route.ts`:
+
+```ts
+import { Router, type Request, type Response } from 'express';
+
+const router = Router();
+
+/** Prefixo para todas as rotas deste recurso. */
+export const routePath = '/products';
+
+/** Lista os produtos do recurso. */
+function listProducts(_req: Request, res: Response): void {
+  res.json({ data: [] });
+}
+
+router.get('/', listProducts);
+
+export default router;
+```
+
+<!-- CRUD_ONLY_START -->
+### Adicionar um recurso em camadas
 
 1. Crie a entidade em `models/` com propriedades privadas e getters/setters para validar invariantes.
 2. Defina os schemas ou parsers de entrada em `schemas/` e crie um repository em `repositories/` para concentrar as consultas SQL.
 3. Implemente as regras e transações no service. Use `getClient()` e garanta `COMMIT`, `ROLLBACK` e `release()`; o `ItemService` mostra esse padrão.
 4. Crie um controller que consome o service sem conhecer SQL, e registre os endpoints e parsers/schemas em `routes/`.
-5. Monte as dependências no arquivo de rota, como em `routes/items.ts`, e monte o router em `app.ts` antes dos handlers finais de 404 e erro.
+5. Monte as dependências no arquivo de rota, como em `routes/items.route.ts`. O carregador registra o router automaticamente antes dos handlers finais de 404 e erro.
 6. Para mudanças no banco, adicione uma migration SQL numerada em `databases/migrations/`. Não altere migrations já aplicadas em ambientes compartilhados.
 
 Evite colocar regras de negócio em routes/controllers, consultas SQL em services, ou lógica HTTP em models/repositories. Essa separação mantém cada camada fácil de revisar e substituir.
+<!-- CRUD_ONLY_END -->
 
 O handler de erros usa `{ "error": { "message": "...", "code": "ERR_CODE" } }`. Erros inesperados retornam mensagem genérica em produção. Use `next(error)` nas rotas assíncronas para encaminhar falhas ao handler.
 
@@ -127,6 +155,7 @@ O handler de erros usa `{ "error": { "message": "...", "code": "ERR_CODE" } }`. 
 | Método | Caminho | Descrição |
 |---|---|---|
 | `GET` | `/health` | Verifica a conexão com o PostgreSQL |
+<!-- CRUD_ONLY_START -->
 | `GET` | `/items` | Lista itens |
 | `POST` | `/items` | Cria um item com `{ "name": "Exemplo" }` |
 | `GET` | `/items/:id` | Consulta um item |
@@ -134,6 +163,10 @@ O handler de erros usa `{ "error": { "message": "...", "code": "ERR_CODE" } }`. 
 | `DELETE` | `/items/:id` | Remove um item |
 
 As respostas de sucesso de itens usam `{ "data": ... }`. Erros de validação retornam status 400; IDs inexistentes retornam 404.
+<!-- CRUD_ONLY_END -->
+<!-- NO_CRUD_START -->
+O projeto inicia sem endpoints de domínio. Adicione um arquivo `*.route.ts` conforme o padrão acima; suas rotas serão registradas automaticamente.
+<!-- NO_CRUD_END -->
 
 ## Migrations
 

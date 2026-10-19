@@ -29,11 +29,28 @@ async function removeDatabaseFiles(target) {
     'models',
     'schemas',
     'errors',
-    'routes/items.ts',
+    'routes/items.route.ts',
     'routes/journal.ts',
     'middlewares/journal.ts',
   ];
   for (const path of databasePaths) {
+    await rm(join(target, path), { recursive: true, force: true });
+  }
+}
+
+/** Remove o CRUD de exemplo e preserva o banco, o journal e a estrutura de rotas. */
+async function removeCrudFiles(target) {
+  const crudPaths = [
+    'controllers',
+    'services',
+    'repositories',
+    'models',
+    'schemas',
+    'errors',
+    'routes/items.route.ts',
+    'databases/migrations/002_create_items.sql',
+  ];
+  for (const path of crudPaths) {
     await rm(join(target, path), { recursive: true, force: true });
   }
 }
@@ -64,7 +81,7 @@ function removeOpenApiDependencies(packageJson, lock) {
 }
 
 /** Injeta ou remove as rotas da documentação interativa no app gerado. */
-async function configureOpenApi(target, useOpenApi) {
+async function configureOpenApi(target, useOpenApi, projectName) {
   const appPath = join(target, 'app.ts');
   const appSource = await readFile(appPath, 'utf8');
   const openApiBlocks = useOpenApi
@@ -79,18 +96,42 @@ async function configureOpenApi(target, useOpenApi) {
     configuredApp = configuredApp.replace(placeholder, replacement);
   }
   await writeFile(appPath, configuredApp);
-  if (!useOpenApi) await rm(join(target, 'openapi.ts'), { force: true });
+  const openApiPath = join(target, 'openapi.ts');
+  if (!useOpenApi) {
+    await rm(openApiPath, { force: true });
+  } else {
+    const openApiSource = await readFile(openApiPath, 'utf8');
+    await writeFile(openApiPath, openApiSource.replaceAll('{{PROJECT_NAME}}', projectName));
+  }
 }
 
-/** Seleciona o bloco apropriado do README conforme a presença da documentação OpenAPI. */
-function configureReadme(readme, useOpenApi) {
+/** Mantém a especificação OpenAPI coerente quando o projeto omite o CRUD de exemplo. */
+async function configureCrud(target, useCrud) {
+  if (useCrud) return;
+
+  await removeCrudFiles(target);
+  const openApiPath = join(target, 'openapi.ts');
+  if (existsSync(openApiPath)) {
+    const source = await readFile(openApiPath, 'utf8');
+    const withoutCrud = source
+      .replace(/\/\* CRUD_ONLY_START \*\/[\s\S]*?\/\* CRUD_ONLY_END \*\//g, '')
+      .replace(/\/\* CRUD_ONLY_START \*\//g, '')
+      .replace(/\/\* CRUD_ONLY_END \*\//g, '');
+    await writeFile(openApiPath, withoutCrud);
+  }
+}
+
+/** Seleciona no README os blocos de documentação conforme as features geradas. */
+function configureReadme(readme, useOpenApi, useCrud) {
   return readme
     .replace(/<!-- OPENAPI_ONLY_START -->([\s\S]*?)<!-- OPENAPI_ONLY_END -->/g, useOpenApi ? '$1' : '')
-    .replace(/<!-- NO_OPENAPI_START -->([\s\S]*?)<!-- NO_OPENAPI_END -->/g, useOpenApi ? '' : '$1');
+    .replace(/<!-- NO_OPENAPI_START -->([\s\S]*?)<!-- NO_OPENAPI_END -->/g, useOpenApi ? '' : '$1')
+    .replace(/<!-- CRUD_ONLY_START -->([\s\S]*?)<!-- CRUD_ONLY_END -->/g, useCrud ? '$1' : '')
+    .replace(/<!-- NO_CRUD_START -->([\s\S]*?)<!-- NO_CRUD_END -->/g, useCrud ? '' : '$1');
 }
 
 /** Copia o template escolhido, atualiza o nome e configura os arquivos do projeto. */
-async function createProject(projectName, useDatabase, useOpenApi) {
+async function createProject(projectName, useDatabase, useOpenApi, useCrud) {
   const target = resolve(process.cwd(), projectName);
   if (isAbsolute(projectName) || existsSync(target)) {
     throw new Error(`O destino já existe ou não é válido: ${basename(target)}`);
@@ -111,7 +152,8 @@ async function createProject(projectName, useDatabase, useOpenApi) {
     const variant = fileURLToPath(new URL(`../templates/variants/no-openapi/${variantName}/`, import.meta.url));
     await cp(variant, target, { recursive: true, force: true });
   }
-  await configureOpenApi(target, useOpenApi);
+  await configureOpenApi(target, useOpenApi, projectName);
+  if (useDatabase) await configureCrud(target, useCrud);
 
   const packagePath = join(target, 'package.json');
   const packageJson = JSON.parse(await readFile(packagePath, 'utf8'));
@@ -129,7 +171,7 @@ async function createProject(projectName, useDatabase, useOpenApi) {
 
   const readmePath = join(target, 'README.md');
   const readme = await readFile(readmePath, 'utf8');
-  await writeFile(readmePath, configureReadme(readme, useOpenApi).replaceAll('{{PROJECT_NAME}}', projectName));
+  await writeFile(readmePath, configureReadme(readme, useOpenApi, useCrud).replaceAll('{{PROJECT_NAME}}', projectName));
 
   console.log(`Projeto ${projectName} criado em ${target}`);
   console.log(`\nPróximos passos:\n  cd ${projectName}\n  cp .env.example .env\n  npm install`);
@@ -139,6 +181,11 @@ async function createProject(projectName, useDatabase, useOpenApi) {
   console.log(useOpenApi
     ? 'Documentação interativa disponível em /docs (OpenAPI + Zod incluídos)'
     : 'OpenAPI, Swagger UI e Zod não foram incluídos neste projeto.');
+  if (useDatabase) {
+    console.log(useCrud
+      ? 'CRUD de exemplo incluído em /items; você pode removê-lo e adicionar seus próprios recursos.'
+      : 'CRUD de exemplo não incluído; o PostgreSQL continua disponível para seus recursos.');
+  }
 }
 
 /** Lê argumentos e prompts, valida as escolhas e gera a API correspondente. */
@@ -148,7 +195,7 @@ async function main() {
   let unknownFlag;
   for (const argument of args) {
     if (!argument.startsWith('--') && projectNameArg === undefined) projectNameArg = argument;
-    if (argument.startsWith('--') && !['--database', '--no-database', '--no-db', '--openapi', '--no-openapi'].includes(argument)) {
+    if (argument.startsWith('--') && !['--database', '--no-database', '--no-db', '--openapi', '--no-openapi', '--crud', '--no-crud'].includes(argument)) {
       unknownFlag = argument;
     }
   }
@@ -158,6 +205,9 @@ async function main() {
   const forceOpenApi = args.includes('--openapi')
     ? true
     : args.includes('--no-openapi') ? false : undefined;
+  const forceCrud = args.includes('--crud')
+    ? true
+    : args.includes('--no-crud') ? false : undefined;
   if (unknownFlag) { fail(`Opção desconhecida: ${unknownFlag}`); return; }
 
   const prompt = createInterface({ input: process.stdin, output: process.stdout });
@@ -177,10 +227,19 @@ async function main() {
     const useDatabase = forceDatabase ?? (process.stdin.isTTY
       ? !/^n(o)?$/i.test((await prompt.question('Deseja integrar PostgreSQL para dados e journal? (S/n): ')).trim())
       : true);
+    if (forceCrud === true && !useDatabase) {
+      fail('A opção --crud exige PostgreSQL. Remova --crud ou habilite --database.');
+      return;
+    }
+    const useCrud = useDatabase
+      ? forceCrud ?? (process.stdin.isTTY
+        ? !/^n(o)?$/i.test((await prompt.question('Deseja incluir um CRUD de exemplo para começar? (S/n): ')).trim())
+        : true)
+      : false;
     const useOpenApi = forceOpenApi ?? (process.stdin.isTTY
       ? /^s(im)?$/i.test((await prompt.question('Deseja incluir OpenAPI, Swagger em /docs e validações com Zod? (s/N): ')).trim())
       : false);
-    await createProject(projectName, useDatabase, useOpenApi);
+    await createProject(projectName, useDatabase, useOpenApi, useCrud);
   } catch (error) {
     fail(error instanceof Error ? error.message : 'Falha ao criar o projeto.');
   } finally {

@@ -4,7 +4,7 @@ import { pool } from './databases/postgres.ts';
 import { env } from './config/env.ts';
 import { createApp } from './app.js';
 
-const app = createApp();
+const app = await createApp();
 
 /** Registra no terminal que a API começou a aceitar conexões. */
 function onServerStarted(): void {

@@ -1,11 +1,14 @@
 import { extendZodWithOpenApi, OpenApiGeneratorV3, OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 import { z } from 'zod';
+/* CRUD_ONLY_START */
 import { createItemSchema, itemIdSchema } from './schemas/item-schemas.js';
+/* CRUD_ONLY_END */
 
 extendZodWithOpenApi(z);
 
 const registry = new OpenAPIRegistry();
 
+/* CRUD_ONLY_START */
 const itemSchema = z.object({
   id: z.number().int().positive(),
   name: z.string(),
@@ -16,6 +19,7 @@ const itemListResponseSchema = z.object({ data: z.array(itemSchema) });
 const errorResponseSchema = z.object({
   error: z.object({ message: z.string(), code: z.string() }),
 });
+/* CRUD_ONLY_END */
 
 registry.registerPath({
   method: 'get', path: '/health', summary: 'Verifica a API e a conexão PostgreSQL',
@@ -25,6 +29,7 @@ registry.registerPath({
   method: 'get', path: '/', summary: 'Informações básicas da API',
   responses: { 200: { description: 'Mensagem e timestamp da API' } },
 });
+/* CRUD_ONLY_START */
 registry.registerPath({
   method: 'get', path: '/items', summary: 'Lista itens',
   responses: { 200: { description: 'Lista de itens', content: { 'application/json': { schema: itemListResponseSchema } } } },
@@ -57,6 +62,7 @@ registry.registerPath({
   method: 'delete', path: '/items/{id}', summary: 'Remove um item', request: { params: itemIdSchema },
   responses: { 204: { description: 'Item removido' }, 404: { description: 'Item não encontrado' } },
 });
+/* CRUD_ONLY_END */
 
 /** Gera a especificação OpenAPI consumida pela interface interativa Swagger UI. */
 export function createOpenApiDocument() {
