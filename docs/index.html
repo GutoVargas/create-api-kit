@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101615">
+  <meta name="description" content="Documentação do create-api-kit: gere APIs REST com Express e TypeScript, escolha PostgreSQL, CRUD inicial e OpenAPI com Zod.">
+  <meta property="og:title" content="create-api-kit — documentação"><meta property="og:type" content="website">
+  <meta property="og:description" content="Do primeiro comando a uma API organizada, segura e pronta para evoluir.">
+  <title>create-api-kit — documentação</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./styles.css"><link rel="stylesheet" href="./details.css">
+  <script src="./script.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <a class="brand" href="#inicio"><span class="brand-mark">ck</span><span>create-api-kit<span class="lime">.</span></span></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="site-nav" id="site-nav" aria-label="Navegação principal"><a href="#comece">Comece</a><a href="#opcoes">Opções</a><a href="#arquitetura">Arquitetura</a><a href="#exemplos">Exemplos</a><a href="#seguranca">Segurança</a><a class="nav-link" href="https://github.com/GutoVargas/create-api-kit" target="_blank" rel="noreferrer">GitHub ↗</a></nav>
+  </header>
+  <main id="conteudo">
+    <section class="hero section-wrap" id="inicio">
+      <div><p class="eyebrow"><i></i> EXPRESS + TYPESCRIPT · CLI OPEN SOURCE</p><h1>Comece pela API.<br><span>Não pela configuração.</span></h1><p class="hero-lede">Gere uma API REST com estrutura clara, segurança pronta e as integrações que fazem sentido para o seu projeto.</p><div class="actions"><a class="button primary" href="#comece">Criar minha API ↓</a><a class="button quiet" href="https://github.com/GutoVargas/create-api-kit" target="_blank" rel="noreferrer">Ver no GitHub ↗</a></div><div class="hero-meta"><span>Node.js 20+</span><i></i><span>TypeScript strict</span><i></i><span>Docker Compose</span></div></div>
+      <div class="terminal"><div class="terminal-bar"><span class="dots"><i></i><i></i><i></i></span><span>seu-terminal</span><span>CLI</span></div><div class="terminal-body"><p class="muted"># gere um projeto em segundos</p><p><b>$</b> npx create-api-kit</p><p class="question">? Nome da pasta/projeto <strong>minha-api</strong></p><p class="question">? Integrar PostgreSQL? <strong>Sim</strong></p><p class="question">? Incluir CRUD inicial? <strong>Sim</strong></p><p class="question">? Incluir OpenAPI e Zod? <strong>Sim</strong></p><p class="success">✓ Projeto criado com sucesso</p><p class="next"><b>$</b> cd minha-api <span>&amp;&amp;</span> docker compose up --build</p></div><div class="stamp">✳<small>Seu ponto<br>de partida.</small></div></div>
+    </section>
+    <section class="proof"><div class="proof-inner"><span><b>01</b> Gere só o que vai usar</span><span><b>02</b> Camadas com responsabilidades claras</span><span><b>03</b> Comece local, evolua para produção</span></div></section>
+
+    <section class="section section-wrap" id="comece"><div class="section-heading split"><div><p class="eyebrow dark-eyebrow">01 / PRIMEIROS PASSOS</p><h2>Do comando à<br>primeira resposta.</h2></div><p class="intro">O CLI pergunta o que seu projeto precisa e gera a estrutura correspondente. Você recebe uma API para desenvolver, com caminhos claros para evoluir.</p></div>
+      <div class="start-grid"><div class="start-steps"><div class="step"><b>1</b><div><h3>Gere o projeto</h3><p>Execute o CLI e escolha as integrações.</p></div></div><div class="code-card"><div class="code-head">terminal <button data-copy="npx create-api-kit">Copiar ▢</button></div><pre><code><i>$</i> npx create-api-kit</code></pre></div><div class="step"><b>2</b><div><h3>Configure e inicie</h3><p>Com PostgreSQL, configure a senha e suba a stack.</p></div></div><div class="code-card"><div class="code-head">terminal <button data-copy="cd minha-api&#10;cp .env.example .env&#10;docker compose up --build">Copiar ▢</button></div><pre><code><i>$</i> cd minha-api
+<i>$</i> cp .env.example .env
+<i>$</i> docker compose up --build</code></pre></div></div>
+        <aside class="light-aside"><span class="aside-icon">↗</span><p class="tiny-label">SEM BANCO?</p><h3>Comece ainda mais leve.</h3><p>Gere apenas o servidor e os middlewares. PostgreSQL, migrations e módulos de persistência não entram no projeto.</p><code>npx create-api-kit minha-api<br><em>--no-database</em></code><a href="#opcoes">Comparar opções →</a></aside></div>
+    </section>
+
+    <section class="section dark-section" id="opcoes"><div class="section-wrap"><div class="section-heading split"><div><p class="eyebrow">02 / SEU PROJETO, SUAS ESCOLHAS</p><h2>Uma base.<br>Quatro caminhos.</h2></div><p class="intro">Banco e documentação são independentes. Escolha no prompt ou passe flags para automatizar a geração.</p></div>
+      <div class="options"><article class="option featured"><small>A · POSTGRES + OPENAPI</small><h3>API completa</h3><p>CRUD demonstrativo, migrations, journal, schemas Zod e Swagger UI em <code>/docs</code>.</p><code class="flag">--database --openapi</code></article><article class="option"><small>B · POSTGRES SEM DOCS</small><h3>Persistência pronta</h3><p>PostgreSQL, migrations e journal. Valide entradas com parsers manuais.</p><code class="flag">--database --no-openapi</code></article><article class="option"><small>C · SEM BANCO + DOCS</small><h3>Servidor documentado</h3><p>Servidor enxuto com Swagger e Zod para seus próximos endpoints.</p><code class="flag">--no-database --openapi</code></article><article class="option"><small>D · BASE MINIMALISTA</small><h3>Servidor enxuto</h3><p>Express, TypeScript e middlewares de segurança, sem banco ou docs.</p><code class="flag">--no-database --no-openapi</code></article></div>
+      <div class="note"><b>+</b><p><strong>CRUD inicial é opcional.</strong> Com PostgreSQL, escolha se quer começar com `/items`. Sem PostgreSQL, essa pergunta não aparece. Use <code>--no-crud</code> para omitir o exemplo.</p></div>
+    </div></section>
+
+    <section class="section section-wrap" id="arquitetura"><div class="section-heading split"><div><p class="eyebrow dark-eyebrow">03 / POR DENTRO DO TEMPLATE</p><h2>Cada camada<br>tem um trabalho.</h2></div><p class="intro">No template com CRUD, uma requisição percorre camadas pequenas e explícitas. Ao adicionar um recurso, fica claro onde colocar cada parte.</p></div>
+      <div class="flow"><div><small>01</small><b>Route</b><span>HTTP + validação</span></div><i>→</i><div><small>02</small><b>Controller</b><span>contrato HTTP</span></div><i>→</i><div class="service-node"><small>03</small><b>Service</b><span>regras de negócio</span></div><i>→</i><div><small>04</small><b>Repository</b><span>consultas SQL</span></div><i>→</i><div><small>05</small><b>PostgreSQL</b><span>persistência</span></div></div>
+      <div class="responsibilities"><article><b>⌘</b><h3>Routes</h3><p>Declaram caminhos, validação e encaminhamento ao controller. O carregador registra os routers automaticamente.</p></article><article><b>↳</b><h3>Controllers</h3><p>Traduzem requisições HTTP em chamadas de serviço e formatam respostas.</p></article><article><b>◇</b><h3>Services</h3><p>Concentram regras do domínio e coordenam transações.</p></article><article><b>▤</b><h3>Repositories</h3><p>Isolam SQL e acesso ao PostgreSQL do restante da aplicação.</p></article></div>
+      <div class="tree"><div class="tree-head"><span class="dots"><i></i><i></i><i></i></span>minha-api/</div><pre><code>.
+├── app.ts                 <span># middlewares e carregamento das rotas</span>
+├── server.ts              <span># inicialização e encerramento</span>
+├── config/env.ts          <span># configuração validada</span>
+├── routes/
+│   ├── loader.ts          <span># descoberta automática</span>
+│   └── items.route.ts     <span># recurso opcional</span>
+├── controllers/
+├── services/
+├── repositories/
+├── models/
+├── schemas/
+├── middlewares/
+├── databases/migrations/
+└── openapi.ts             <span># somente se selecionado</span></code></pre></div>
+    </section>
+
+    <section class="section tint-section" id="exemplos"><div class="section-wrap"><div class="section-heading split"><div><p class="eyebrow dark-eyebrow">04 / DESENVOLVIMENTO</p><h2>Adicione uma rota.<br>O app encontra.</h2></div><p class="intro">Crie um arquivo com sufixo <code>.route.ts</code>, exporte o prefixo e o router. O carregador descobre o módulo no desenvolvimento e na versão compilada.</p></div>
+      <div class="example-grid"><div class="code-window"><div class="file-head"><span>● &nbsp;routes/products.route.ts</span><small>TypeScript</small></div><pre><code><b>import</b> { Router, type Request, type Response } <b>from</b> <em>'express'</em>;
+
+<b>const</b> router = Router();
+
+<span class="comment">/** Prefixo do recurso. */</span>
+<b>export const</b> routePath = <em>'/products'</em>;
+
+<span class="comment">/** Lista os produtos disponíveis. */</span>
+<b>function</b> listProducts(_req: Request, res: Response): void {
+  res.json({ data: [] });
+}
+
+router.get(<em>'/'</em>, listProducts);
+<b>export default</b> router;</code></pre><div class="file-foot">✓ &nbsp;Registrada automaticamente em <code>GET /products</code></div></div>
+        <div class="example-aside"><article><b>1</b><div><strong>Crie o arquivo</strong><p>Use <code>products.route.ts</code> dentro de <code>routes/</code>.</p></div></article><article><b>2</b><div><strong>Defina o prefixo</strong><p><code>routePath</code> escolhe onde o router será montado.</p></div></article><article><b>3</b><div><strong>Exporte o router</strong><p>Ele é carregado antes do handler 404.</p></div></article><aside><strong>Usa OpenAPI?</strong><p>Registre a operação também em <code>openapi.ts</code> para aparecer no Swagger UI.</p></aside></div></div>
+      <div class="crud-box"><div><small>EXEMPLO COM POSTGRES + CRUD</small><h3>O recurso <code>/items</code> demonstra o fluxo todo.</h3><p>Ative-o no prompt do CLI ou com <code>--crud</code>.</p></div><div class="endpoints"><div><b class="get">GET</b><code>/items</code><span>Listar</span></div><div><b class="post">POST</b><code>/items</code><span>Criar</span></div><div><b class="get">GET</b><code>/items/:id</code><span>Consultar</span></div><div><b class="put">PUT</b><code>/items/:id</code><span>Atualizar</span></div><div><b class="delete">DELETE</b><code>/items/:id</code><span>Remover</span></div></div><div class="payload"><small>REQUEST · POST /items</small><code>{ "name": "Meu primeiro item" }</code></div></div>
+      <div class="curl-sample"><div><small>TESTE PELO TERMINAL · CRUD HABILITADO</small><p>Envie uma requisição e veja a resposta da API.</p></div><pre><code>curl -X POST http://localhost:3000/items \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Meu primeiro item"}'</code></pre></div>
+    </div></section>
+
+    <section class="section section-wrap docs-section" id="docs-api"><div class="docs-copy"><p class="eyebrow dark-eyebrow">05 / TESTE NO NAVEGADOR</p><h2>Docs para explorar.<br>Sem trocar de janela.</h2><p>Escolha OpenAPI no CLI e receba Swagger UI em <code>/docs</code>, pronta para experimentar endpoints. A especificação também fica em <code>/docs.json</code>.</p><ul><li>Explore paths, parâmetros e payloads</li><li>Use “Try it out” para enviar requisições</li><li>Valide entradas com schemas Zod</li></ul><small>OpenAPI, Swagger UI e Zod só entram quando selecionados.</small></div><div class="swagger"><div class="swagger-top"><strong>Swagger<span> UI</span></strong><code>http://localhost:3000</code></div><h3>API de exemplo <small>1.0.0</small></h3><p>Documentação interativa da API</p><div class="swagger-group"><header>items <small>Operações de itens</small>⌄</header><div><b class="get">GET</b><code>/items</code><span>Lista itens</span></div><div><b class="post">POST</b><code>/items</code><span>Cria um item</span></div><div><b class="get">GET</b><code>/items/{id}</code><span>Consulta item</span></div></div><footer>● &nbsp;VISUALIZAÇÃO ILUSTRATIVA · GERADA PELO TEMPLATE</footer></div></section>
+
+    <section class="section dark-section" id="seguranca"><div class="section-wrap"><div class="section-heading split"><div><p class="eyebrow">06 / SEGURANÇA COMO PADRÃO</p><h2>Proteções desde<br>a primeira request.</h2></div><p class="intro">Controles transversais ficam ligados para que você comece pelo domínio com uma base protegida.</p></div><div class="security-grid"><article><small>01</small><h3>Helmet</h3><p>Cabeçalhos HTTP de proteção.</p></article><article><small>02</small><h3>CORS restritivo</h3><p>Origens bloqueadas até configurar <code>ALLOWED_ORIGINS</code>.</p></article><article><small>03</small><h3>Rate limit</h3><p>100 requisições por IP a cada 15 minutos.</p></article><article><small>04</small><h3>HPP</h3><p>Proteção contra parâmetros duplicados.</p></article><article><small>05</small><h3>Request ID</h3><p>Identificador retornado em <code>X-Request-Id</code>.</p></article><article><small>06</small><h3>Erros padronizados</h3><p>Contrato <code>{ error: { message, code } }</code>.</p></article></div><div class="cors-config"><div><small>CONFIGURE NO .env</small><strong>Libere apenas as origens necessárias.</strong></div><code>ALLOWED_ORIGINS=http://localhost:5173,https://app.exemplo.com</code></div></div></section>
+
+    <section class="section section-wrap use-cases" id="casos"><div class="section-heading"><p class="eyebrow dark-eyebrow">07 / QUANDO USAR</p><h2>Saia do zero<br>com uma boa base.</h2></div><div class="usecase-grid"><article><small>CASO 01</small><b>◌</b><h3>API para produto novo</h3><p>Comece com banco, CRUD opcional e camadas para evoluir por recurso.</p></article><article><small>CASO 02</small><b>⌁</b><h3>Backend para frontend</h3><p>Experimente chamadas no Swagger e ajuste contratos durante o desenvolvimento.</p></article><article><small>CASO 03</small><b>▱</b><h3>Serviço leve ou protótipo</h3><p>Gere sem PostgreSQL e adicione apenas os módulos que o domínio pedir.</p></article></div></section>
+
+    <section class="cta section-wrap" id="iniciar"><div class="cta-mark">ck<span>.</span></div><p class="eyebrow">SEU PRÓXIMO PROJETO COMEÇA AQUI</p><h2>Menos setup.<br><span>Mais produto.</span></h2><p>Gere a base, escolha suas integrações e comece a construir o que torna sua API única.</p><div class="cta-command"><code>npx create-api-kit</code><button data-copy="npx create-api-kit">Copiar ▢</button></div><div class="cta-links"><a href="https://github.com/GutoVargas/create-api-kit" target="_blank" rel="noreferrer">GitHub ↗</a><a href="https://www.npmjs.com/package/create-api-kit" target="_blank" rel="noreferrer">npm ↗</a><a href="https://github.com/GutoVargas/create-api-kit/issues" target="_blank" rel="noreferrer">Issues ↗</a></div></section>
+  </main>
+  <footer class="site-footer"><a href="#inicio">create-api-kit<span>.</span></a><p>Uma API melhor começa com uma base clara.</p><small>Open source · Express · TypeScript</small></footer>
+  <div class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

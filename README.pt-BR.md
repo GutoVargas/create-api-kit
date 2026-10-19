@@ -2,6 +2,8 @@
 
 [English](README.md) | Português (Brasil)
 
+[Acessar documentação visual](https://gutovargas.github.io/create-api-kit/)
+
 CLI para gerar APIs com Express e TypeScript. Durante a criação, escolha a integração PostgreSQL e, opcionalmente, OpenAPI/Swagger em `/docs` com validações Zod. Se OpenAPI/Zod forem desativados, essas dependências não serão instaladas e a API gerada usará parsers manuais para validar entradas.
 
 ## Gerar uma API

@@ -2,6 +2,8 @@
 
 English | [Português (Brasil)](README.pt-BR.md)
 
+[Open the documentation site](https://gutovargas.github.io/create-api-kit/)
+
 Generate secure REST APIs with Express and TypeScript. Choose PostgreSQL for persistence and migrations, and optionally include OpenAPI/Swagger UI at `/docs` with Zod schemas. Disabled features are omitted from the generated project, including their dependencies.
 
 ```sh
