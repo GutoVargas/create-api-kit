@@ -9,8 +9,7 @@ import { rateLimit } from 'express-rate-limit';
 import hpp from 'hpp';
 import { itemsRouter } from './routes/items.js';
 import { randomUUID } from 'node:crypto';
-import swaggerUi from 'swagger-ui-express';
-import { createOpenApiDocument } from './openapi.js';
+{{OPENAPI_IMPORTS}}
 
 /** Monta o Express, configura a segurança global e registra as rotas da API. */
 export function createApp(): Express {
@@ -34,8 +33,7 @@ export function createApp(): Express {
 
   app.get('/', home);
 
-  app.get('/docs.json', openApiJson);
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(createOpenApiDocument()));
+{{OPENAPI_ROUTES}}
 
   app.use('/items', itemsRouter);
 
@@ -46,8 +44,7 @@ export function createApp(): Express {
   return app;
 }
 
-/** Retorna a especificação OpenAPI em JSON para ferramentas e clientes. */
-const openApiJson: RequestHandler = (_req, res) => { res.json(createOpenApiDocument()); };
+{{OPENAPI_HANDLER}}
 
 /** Atribui um identificador único a cada requisição recebida. */
 const assignRequestId: RequestHandler = (req, _res, next) => {

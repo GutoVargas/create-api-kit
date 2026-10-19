@@ -39,18 +39,28 @@ npm run dev
 
 1. Copie `.env.example` para `.env` e defina `DB_PASSWORD` e, se necessário, `ALLOWED_ORIGINS`.
 2. Execute `docker compose up --build` para iniciar o PostgreSQL e a API. O Compose aplica as migrations antes de iniciar o servidor.
+<!-- OPENAPI_ONLY_START -->
 3. Abra [http://localhost:3000/docs](http://localhost:3000/docs) no navegador. A interface Swagger UI lista as operações disponíveis.
 4. Expanda uma rota, selecione **Try it out**, informe parâmetros ou JSON e clique em **Execute**. A resposta HTTP aparece na própria página, sem precisar instalar um cliente separado.
 5. Para desenvolver, adicione schemas em `schemas/`, implemente as camadas da aplicação e registre a operação em `openapi.ts`. Reinicie o servidor de desenvolvimento e atualize `/docs`.
+<!-- OPENAPI_ONLY_END -->
+<!-- NO_OPENAPI_START -->
+3. A API inicia sem OpenAPI, Swagger UI ou Zod. A validação do CRUD de exemplo usa parsers manuais em `schemas/` e continua retornando erros 400 para entradas inválidas.
+4. Para desenvolver, adicione parsers em `schemas/`, implemente as camadas da aplicação e registre as rotas. A opção sem essa feature não instala dependências de documentação ou Zod.
+<!-- NO_OPENAPI_END -->
 
+<!-- OPENAPI_ONLY_START -->
 A especificação OpenAPI em JSON também fica disponível em `/docs.json`. A rota Swagger UI chama a API na mesma origem, então não é necessário liberar uma origem CORS adicional para acessá-la localmente.
+<!-- OPENAPI_ONLY_END -->
 
 ## Estrutura do projeto
 
 ```text
 .
 ├── app.ts                       # Configuração do Express, middlewares e rotas
+<!-- OPENAPI_ONLY_START -->
 ├── openapi.ts                   # Especificação OpenAPI gerada dos schemas Zod
+<!-- OPENAPI_ONLY_END -->
 ├── server.ts                    # Inicialização HTTP e encerramento gracioso
 ├── config/
 │   └── env.ts                   # Leitura e validação das variáveis de ambiente
@@ -61,7 +71,7 @@ A especificação OpenAPI em JSON também fica disponível em `/docs.json`. A ro
 ├── middlewares/
 │   ├── error-handler.ts         # Resposta padronizada para erros
 │   ├── journal.ts               # Auditoria das requisições
-│   └── validate.ts              # Utilitário de validação com Zod
+│   └── validate.ts              # Utilitário de validação das entradas
 ├── controllers/
 │   └── item-controller.ts       # HTTP: traduz request em chamada de serviço
 ├── services/
@@ -71,7 +81,7 @@ A especificação OpenAPI em JSON também fica disponível em `/docs.json`. A ro
 ├── models/
 │   └── item.ts                  # Entidade Item com getters e setters
 ├── schemas/
-│   └── item-schemas.ts          # Contratos Zod dos dados de entrada
+│   └── item-schemas.ts          # Validação de entrada; Zod na opção OpenAPI
 ├── errors/
 │   └── app-error.ts             # Erros de aplicação com status e código
 ├── routes/
@@ -94,7 +104,7 @@ O fluxo da requisição é `routes → middlewares → controller → service �
 - **Services:** implementam regras de negócio e coordenam transações quando uma operação grava dados.
 - **Repositories:** isolam as consultas SQL e convertem registros do banco em entidades.
 - **Models:** representam entidades e protegem seus invariantes. `Item` mantém campos privados (`_id`, `_name`, `_createdAt`), expõe getters e setters e valida os valores atribuídos. `toJSON()` define o formato enviado pela API.
-- **Schemas:** definem os formatos permitidos para body, params e query com Zod.
+- **Schemas:** definem os formatos permitidos para body, params e query com Zod na opção OpenAPI ou parsers manuais na opção sem OpenAPI.
 - **Errors:** `AppError` carrega status HTTP e código de erro sem misturar detalhes de transporte com SQL.
 
 Toda função, método, getter, setter e callback nomeado deve ter um comentário JSDoc imediatamente acima descrevendo seu propósito. Documente também parâmetros, retorno e efeitos colaterais quando não forem evidentes pela assinatura.
@@ -102,9 +112,9 @@ Toda função, método, getter, setter e callback nomeado deve ter um comentári
 ### Adicionar um recurso
 
 1. Crie a entidade em `models/` com propriedades privadas e getters/setters para validar invariantes.
-2. Defina os schemas Zod em `schemas/` e crie um repository em `repositories/` para concentrar as consultas SQL.
+2. Defina os schemas ou parsers de entrada em `schemas/` e crie um repository em `repositories/` para concentrar as consultas SQL.
 3. Implemente as regras e transações no service. Use `getClient()` e garanta `COMMIT`, `ROLLBACK` e `release()`; o `ItemService` mostra esse padrão.
-4. Crie um controller que consome o service sem conhecer SQL, e registre os endpoints e schemas em `routes/`.
+4. Crie um controller que consome o service sem conhecer SQL, e registre os endpoints e parsers/schemas em `routes/`.
 5. Monte as dependências no arquivo de rota, como em `routes/items.ts`, e monte o router em `app.ts` antes dos handlers finais de 404 e erro.
 6. Para mudanças no banco, adicione uma migration SQL numerada em `databases/migrations/`. Não altere migrations já aplicadas em ambientes compartilhados.
 

@@ -2,6 +2,13 @@
 
 Este arquivo resume a integração da documentação interativa OpenAPI/Swagger nos templates e a correção aplicada após o erro observado ao iniciar `api_teste`.
 
+## Opção OpenAPI/Zod no CLI
+
+- O CLI pergunta se o projeto deve incluir OpenAPI, Swagger UI em `/docs` e validações Zod. A resposta padrão é não; em modo não interativo também é necessário usar `--openapi` para habilitar a feature.
+- `--openapi` habilita a feature e `--no-openapi` desabilita explicitamente.
+- Quando desabilitada, o gerador remove os arquivos e rotas de documentação e usa parsers manuais para manter a validação de entradas. Zod, `@asteasolutions/zod-to-openapi`, `swagger-ui-express` e `@types/swagger-ui-express` não são incluídos nas dependências.
+- Cada combinação (PostgreSQL ou sem banco, OpenAPI ou sem OpenAPI) tem lockfile próprio para evitar que instalações incluam dependências opcionais.
+
 ## Swagger UI e OpenAPI
 
 - Adicionadas as dependências `@asteasolutions/zod-to-openapi` e `swagger-ui-express` aos templates com e sem PostgreSQL, com os respectivos tipos TypeScript e lockfiles atualizados.
@@ -21,6 +28,7 @@ Ao montar a especificação com parâmetros Zod, `zod-to-openapi` chama `.openap
 - `templates/variants/no-database/app.ts` e `templates/variants/no-database/openapi.ts`
 - `templates/default/package.json` e `templates/default/package-lock.json`
 - `templates/variants/no-database/package-lock.json`
+- `templates/variants/no-openapi/postgres/` e `templates/variants/no-openapi/no-database/` (parsers manuais, env sem Zod e lockfiles mínimos)
 - `bin/create-api-kit.js`
 - `templates/default/README.md` e `templates/variants/no-database/README.md`
 - `README.md`
@@ -28,4 +36,4 @@ Ao montar a especificação com parâmetros Zod, `zod-to-openapi` chama `.openap
 
 ## Como acessar
 
-Após iniciar qualquer projeto gerado, abra `http://localhost:3000/docs`. A especificação em JSON está em `http://localhost:3000/docs.json`.
+Quando a opção OpenAPI/Zod for habilitada, abra `http://localhost:3000/docs` após iniciar a API. A especificação em JSON fica em `http://localhost:3000/docs.json`. Se desabilitada, esses endpoints e dependências não existem no projeto gerado.

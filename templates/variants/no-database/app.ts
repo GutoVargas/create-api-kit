@@ -6,8 +6,7 @@ import cors from 'cors';
 import { rateLimit } from 'express-rate-limit';
 import hpp from 'hpp';
 import { randomUUID } from 'node:crypto';
-import swaggerUi from 'swagger-ui-express';
-import { createOpenApiDocument } from './openapi.js';
+{{OPENAPI_IMPORTS}}
 
 /** Configura a API sem conexão de banco e registra as rotas básicas. */
 export function createApp(): Express {
@@ -28,15 +27,13 @@ export function createApp(): Express {
 
   app.get('/health', healthCheck);
   app.get('/', home);
-  app.get('/docs.json', openApiJson);
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(createOpenApiDocument()));
+{{OPENAPI_ROUTES}}
   app.use(notFound);
   app.use(errorHandler);
   return app;
 }
 
-/** Retorna a especificação OpenAPI em JSON para ferramentas e clientes. */
-const openApiJson: RequestHandler = (_req, res) => { res.json(createOpenApiDocument()); };
+{{OPENAPI_HANDLER}}
 
 /** Atribui um identificador único a cada requisição recebida. */
 const assignRequestId: RequestHandler = (req, _res, next) => {

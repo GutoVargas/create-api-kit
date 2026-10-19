@@ -10,25 +10,28 @@ npm install
 npm run dev
 ```
 
+<!-- OPENAPI_ONLY_START -->
 Com o servidor em execução, abra [http://localhost:3000/docs](http://localhost:3000/docs) no navegador. Expanda uma operação e use **Try it out** e **Execute** para enviar requisições e ver as respostas. Esta variante inclui somente `/` e `/health`; ao criar endpoints, adicione as rotas e atualize `openapi.ts`. A especificação OpenAPI também pode ser consultada em `/docs.json`.
+<!-- OPENAPI_ONLY_END -->
+<!-- NO_OPENAPI_START -->
+Esta API inicia sem OpenAPI, Swagger UI ou Zod e não instala dependências de documentação ou Zod. Para adicionar endpoints, crie as rotas e valide entradas com parsers manuais.
+<!-- NO_OPENAPI_END -->
 
 Para compilar e executar a versão de produção, use `npm run build` e `npm start`. Também é possível executar a API em container com `docker compose up --build`.
-
-## Testar a API no navegador
-
-Com a API em execução, abra [http://localhost:3000/docs](http://localhost:3000/docs). A página Swagger UI permite consultar e executar as rotas documentadas pelo botão **Try it out**. A especificação OpenAPI em JSON está em `/docs.json`. A variante sem banco documenta `/` e `/health`; ao adicionar rotas, atualize `openapi.ts` e os schemas correspondentes.
 
 ## Estrutura
 
 ```text
 .
 ├── app.ts                    # Configuração do Express e rotas básicas
+<!-- OPENAPI_ONLY_START -->
 ├── openapi.ts                # Especificação OpenAPI da API
+<!-- OPENAPI_ONLY_END -->
 ├── server.ts                 # Inicialização HTTP e encerramento gracioso
 ├── config/env.ts             # Validação das variáveis de ambiente
 ├── middlewares/
 │   ├── error-handler.ts      # Contrato padronizado de erro
-│   └── validate.ts           # Utilitário de validação Zod para novas rotas
+│   └── validate.ts           # Utilitário de validação para novas rotas
 ├── routes/                   # Adicione aqui os routers da API
 ├── types/express.d.ts        # Extensões dos tipos Express
 ├── Dockerfile
