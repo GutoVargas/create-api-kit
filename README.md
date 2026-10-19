@@ -65,4 +65,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Report bugs or request features in [GitH
 
 ## License
 
-No license has been declared in this repository yet. Until the project owner chooses and adds one, do not assume that the source is licensed for reuse or redistribution.
+This project is licensed under the [MIT License](LICENSE).

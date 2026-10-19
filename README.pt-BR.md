@@ -91,4 +91,4 @@ Antes de publicar, confira os arquivos incluídos com `npm pack --dry-run`. O pa
 
 ## Contribuir e licença
 
-Consulte [CONTRIBUTING.md](CONTRIBUTING.md) para orientações sobre issues, pull requests e verificações locais. O repositório ainda não declara uma licença; até que o mantenedor escolha e adicione uma, não presuma permissão para reutilizar ou redistribuir o código.
+Consulte [CONTRIBUTING.md](CONTRIBUTING.md) para orientações sobre issues, pull requests e verificações locais. Este projeto está sob a [licença MIT](LICENSE), que permite usar, copiar, modificar, mesclar, publicar, distribuir, sublicenciar e vender cópias do software, desde que o aviso de copyright e o texto da licença sejam mantidos.
