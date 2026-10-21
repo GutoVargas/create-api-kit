@@ -5,7 +5,6 @@
 ## Project
 
 - Repository: https://github.com/GutoVargas/create-api-kit
-- npm package: https://www.npmjs.com/package/create-api-kit
 - Install/run: `npx create-api-kit`
 - Minimum Node.js version: 20
 

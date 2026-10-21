@@ -57,8 +57,6 @@ npm run check
 node bin/create-api-kit.js sample-api --no-database --no-openapi
 ```
 
-Inspect the publish contents with `npm pack --dry-run`. The package includes the CLI and all template variants.
-
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Report bugs or request features in [GitHub Issues](https://github.com/GutoVargas/create-api-kit/issues).

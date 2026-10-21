@@ -1,6 +1,6 @@
 # Changelog
 
-Notable changes to `create-api-kit` are recorded here. Versions follow the package version published to npm.
+Notable changes to `create-api-kit` are recorded here, organized by package version.
 
 ## Unreleased
 

@@ -67,7 +67,7 @@ Na opção sem banco, o Compose inicia apenas a API e `GET /health` retorna `dat
         └── no-openapi/     # Parsers manuais e lockfiles sem Zod/Swagger
 ```
 
-O CRUD de exemplo segue `route → controller → service → repository → model/banco`. O diretório `templates/default/` define o fluxo com PostgreSQL e OpenAPI; os arquivos em `templates/variants/` substituem apenas as partes necessárias para cada escolha. Atualize os READMEs quando mudar comandos, estrutura ou padrões de implementação. `package.json` configura o comando `create-api-kit` e inclui `bin/` e toda a pasta `templates/` no pacote npm.
+O CRUD de exemplo segue `route → controller → service → repository → model/banco`. O diretório `templates/default/` define o fluxo com PostgreSQL e OpenAPI; os arquivos em `templates/variants/` substituem apenas as partes necessárias para cada escolha. Atualize os READMEs quando mudar comandos, estrutura ou padrões de implementação. O CLI usa `bin/create-api-kit.js` como executável e os arquivos de `templates/` como base dos projetos gerados.
 
 O código do template usa JSDoc em todas as funções e métodos. Mantenha essa convenção ao adicionar ou alterar funcionalidades, explicando propósito, parâmetros, retorno e efeitos colaterais relevantes.
 
@@ -87,8 +87,6 @@ npm install
 npm run build
 ```
 
-Antes de publicar, confira os arquivos incluídos com `npm pack --dry-run`. O pacote requer autenticação npm e o nome `create-api-kit` disponível no registry.
-
 ## Contribuir e licença
 
-Consulte [CONTRIBUTING.md](CONTRIBUTING.md) para orientações sobre issues, pull requests e verificações locais. Este projeto está sob a [licença MIT](LICENSE), que permite usar, copiar, modificar, mesclar, publicar, distribuir, sublicenciar e vender cópias do software, desde que o aviso de copyright e o texto da licença sejam mantidos.
+Consulte [CONTRIBUTING.md](CONTRIBUTING.md) para orientações sobre issues, pull requests e verificações locais. Este projeto está sob a [licença MIT](LICENSE), que permite usar, copiar, modificar, mesclar, distribuir, sublicenciar e vender cópias do software, desde que o aviso de copyright e o texto da licença sejam mantidos.

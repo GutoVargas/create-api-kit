@@ -1,0 +1,29 @@
+# Repository and local development files
+.git/
+.github/
+.vscode/
+.codex/
+.agents/
+docs/
+test/
+tests/
+coverage/
+dist/
+node_modules/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+.npmrc
+
+# Logs, caches, and generated archives
+*.log
+npm-debug.log*
+yarn-debug.log*
+lerna-debug.log*
+.cache/
+.npm/
+*.tgz
+*.tsbuildinfo

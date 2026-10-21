@@ -13,7 +13,6 @@ Thanks for helping improve `create-api-kit`. Issues and pull requests are welcom
 ```sh
 npm install
 npm run check
-npm pack --dry-run
 ```
 
 When changing generation behavior, manually generate each affected combination and inspect its files and dependencies. Do not commit generated test projects, `.env` files, `node_modules` or build output.
