@@ -1,6 +1,6 @@
 {
   "name": "create-api-kit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Scaffold secure Express and TypeScript REST APIs with optional PostgreSQL and OpenAPI/Zod",
   "license": "MIT",
   "keywords": [
