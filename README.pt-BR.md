@@ -45,7 +45,7 @@ Com PostgreSQL, configure `DB_PASSWORD` no `.env`. Sem PostgreSQL, esses campos 
 
 Use `--no-database` e `--no-openapi` para gerar uma API sem essas integrações e sem suas dependências. `--openapi` habilita a documentação e schemas Zod. O modo interativo pergunta as opções.
 
-As rotas são descobertas automaticamente em `routes/*.route.ts` durante o desenvolvimento e `routes/*.route.js` após a compilação. Cada módulo exporta `routePath` e um router como exportação padrão; não é necessário editar `app.ts` para registrar um router. Com OpenAPI habilitado, documente as operações novas também em `openapi.ts`.
+As rotas são descobertas automaticamente em `routes/*.route.ts` durante o desenvolvimento e `routes/*.route.js` após a compilação. Cada módulo exporta `routePath` e um router como exportação padrão; não é necessário editar `app.ts` para registrar um router. Com OpenAPI habilitado, exporte também `openApiPaths` no arquivo da rota: o servidor agrega essas definições ao Swagger em `/docs` e `/docs.json` durante a inicialização. O Express não consegue inferir parâmetros, schemas e respostas do handler, por isso cada operação precisa ser descrita.
 
 O README criado no projeto descreve sua estrutura e comandos. Na opção PostgreSQL, o Compose inicia o banco, executa migrations e sobe a API:
 

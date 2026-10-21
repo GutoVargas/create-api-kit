@@ -28,7 +28,7 @@ export async function createApp(): Promise<Express> {
 
   app.get('/health', healthCheck);
   app.get('/', home);
-  await loadApiRoutes(app);
+  const openApiPaths = await loadApiRoutes(app);
 {{OPENAPI_ROUTES}}
   app.use(notFound);
   app.use(errorHandler);

@@ -6,10 +6,12 @@ import type { Express, RequestHandler } from 'express';
 interface ApiRouteModule {
   default: RequestHandler;
   routePath: string;
+  /** Operações OpenAPI opcionais declaradas pelo módulo da rota. */
+  openApiPaths?: Record<string, unknown>[];
 }
 
 /** Importa e registra todos os módulos `*.route.ts` da pasta routes. */
-export async function loadApiRoutes(app: Express): Promise<void> {
+export async function loadApiRoutes(app: Express): Promise<Record<string, unknown>[]> {
   const routesDirectory = join(dirname(fileURLToPath(import.meta.url)));
   const entries = await readdir(routesDirectory, { withFileTypes: true });
   const routeFiles: string[] = [];
@@ -18,6 +20,7 @@ export async function loadApiRoutes(app: Express): Promise<void> {
   }
   routeFiles.sort();
 
+  const openApiPaths: Record<string, unknown>[] = [];
   for (const routeFile of routeFiles) {
     const moduleUrl = pathToFileURL(join(routesDirectory, routeFile)).href;
     const routeModule = await import(moduleUrl) as Partial<ApiRouteModule>;
@@ -25,5 +28,7 @@ export async function loadApiRoutes(app: Express): Promise<void> {
       throw new Error(`A rota ${routeFile} precisa exportar routePath e um router default.`);
     }
     app.use(routeModule.routePath, routeModule.default);
+    if (Array.isArray(routeModule.openApiPaths)) openApiPaths.push(...routeModule.openApiPaths);
   }
+  return openApiPaths;
 }

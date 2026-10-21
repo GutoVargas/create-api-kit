@@ -33,9 +33,9 @@ export async function createApp(): Promise<Express> {
 
   app.get('/', home);
 
-{{OPENAPI_ROUTES}}
+  const openApiPaths = await loadApiRoutes(app);
 
-  await loadApiRoutes(app);
+{{OPENAPI_ROUTES}}
 
   app.use(notFound);
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
+import { fileURLToPath } from 'node:url';
 
 /** Mostra uma falha de uso e marca o processo para terminar com código 1. */
 function fail(message) {
@@ -86,10 +86,10 @@ async function configureOpenApi(target, useOpenApi, projectName) {
   const appSource = await readFile(appPath, 'utf8');
   const openApiBlocks = useOpenApi
     ? {
-        '{{OPENAPI_IMPORTS}}': "import swaggerUi from 'swagger-ui-express';\nimport { createOpenApiDocument } from './openapi.js';",
-        '{{OPENAPI_ROUTES}}': "  app.get('/docs.json', openApiJson);\n  app.use('/docs', swaggerUi.serve, swaggerUi.setup(createOpenApiDocument()));",
-        '{{OPENAPI_HANDLER}}': "/** Retorna a especificação OpenAPI em JSON para ferramentas e clientes. */\nconst openApiJson: RequestHandler = (_req, res) => { res.json(createOpenApiDocument()); };",
-      }
+      '{{OPENAPI_IMPORTS}}': "import swaggerUi from 'swagger-ui-express';\nimport { createOpenApiDocument } from './openapi.js';",
+      '{{OPENAPI_ROUTES}}': "  const openApiDocument = createOpenApiDocument(openApiPaths);\n  app.get('/docs.json', (_req, res) => { res.json(openApiDocument); });\n  app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));",
+      '{{OPENAPI_HANDLER}}': '',
+    }
     : { '{{OPENAPI_IMPORTS}}': '', '{{OPENAPI_ROUTES}}': '', '{{OPENAPI_HANDLER}}': '' };
   let configuredApp = appSource;
   for (const [placeholder, replacement] of Object.entries(openApiBlocks)) {

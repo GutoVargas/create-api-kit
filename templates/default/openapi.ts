@@ -7,6 +7,7 @@ import { createItemSchema, itemIdSchema } from './schemas/item-schemas.js';
 extendZodWithOpenApi(z);
 
 const registry = new OpenAPIRegistry();
+const registeredDynamicPaths = new Set<string>();
 
 /* CRUD_ONLY_START */
 const itemSchema = z.object({
@@ -65,7 +66,14 @@ registry.registerPath({
 /* CRUD_ONLY_END */
 
 /** Gera a especificação OpenAPI consumida pela interface interativa Swagger UI. */
-export function createOpenApiDocument() {
+export function createOpenApiDocument(additionalPaths: Record<string, unknown>[] = []) {
+  for (const path of additionalPaths) {
+    const key = JSON.stringify(path);
+    if (!registeredDynamicPaths.has(key)) {
+      registry.registerPath(path as Parameters<typeof registry.registerPath>[0]);
+      registeredDynamicPaths.add(key);
+    }
+  }
   return new OpenApiGeneratorV3(registry.definitions).generateDocument({
     openapi: '3.0.0',
     info: { title: '{{PROJECT_NAME}}', version: '1.0.0', description: 'Documentação interativa da API.' },

@@ -45,5 +45,8 @@
   "type": "module",
   "scripts": {
     "check": "node --check bin/create-api-kit.js"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5"
   }
 }

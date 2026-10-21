@@ -61,4 +61,30 @@ function registerCopyButtons() {
   }
 }
 
+/** Alterna os exemplos para refletir se o projeto gerado inclui PostgreSQL. */
+function onConfigTabClick(event) {
+  if (!(event.currentTarget instanceof HTMLButtonElement)) return;
+  const selectedConfig = event.currentTarget.dataset.configTab;
+  if (!selectedConfig) return;
+
+  for (const button of document.querySelectorAll('[data-config-tab]')) {
+    const isSelected = button === event.currentTarget;
+    button.classList.toggle('is-active', isSelected);
+    button.setAttribute('aria-pressed', String(isSelected));
+  }
+  for (const panel of document.querySelectorAll('[data-config-panel]')) {
+    const isVisible = panel.dataset.configPanel === selectedConfig;
+    panel.hidden = !isVisible;
+    panel.setAttribute('aria-hidden', String(!isVisible));
+  }
+}
+
+/** Liga o seletor de configuração aos exemplos correspondentes. */
+function registerConfigTabs() {
+  for (const button of document.querySelectorAll('[data-config-tab]')) {
+    button.addEventListener('click', onConfigTabClick);
+  }
+}
+
 registerCopyButtons();
+registerConfigTabs();

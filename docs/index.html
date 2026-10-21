@@ -70,8 +70,319 @@
 }
 
 router.get(<em>'/'</em>, listProducts);
+
+<span class="comment">/** Operações descritas explicitamente para o Swagger. */</span>
+<b>export const</b> openApiPaths = [{
+  method: <em>'get'</em>, path: <em>'/products'</em>, summary: <em>'Lista produtos'</em>,
+  responses: { 200: { description: <em>'Lista de produtos'</em> } },
+}];
 <b>export default</b> router;</code></pre><div class="file-foot">✓ &nbsp;Registrada automaticamente em <code>GET /products</code></div></div>
-        <div class="example-aside"><article><b>1</b><div><strong>Crie o arquivo</strong><p>Use <code>products.route.ts</code> dentro de <code>routes/</code>.</p></div></article><article><b>2</b><div><strong>Defina o prefixo</strong><p><code>routePath</code> escolhe onde o router será montado.</p></div></article><article><b>3</b><div><strong>Exporte o router</strong><p>Ele é carregado antes do handler 404.</p></div></article><aside><strong>Usa OpenAPI?</strong><p>Registre a operação também em <code>openapi.ts</code> para aparecer no Swagger UI.</p></aside></div></div>
+        <div class="example-aside"><article><b>1</b><div><strong>Crie o arquivo</strong><p>Use <code>products.route.ts</code> dentro de <code>routes/</code>.</p></div></article><article><b>2</b><div><strong>Defina o prefixo</strong><p><code>routePath</code> escolhe onde o router será montado.</p></div></article><article><b>3</b><div><strong>Exporte o router</strong><p>Ele é carregado antes do handler 404.</p></div></article><aside><strong>Swagger não infere operações</strong><p>Exporte <code>openApiPaths</code> no módulo da rota. O carregador agrega essas definições em <code>/docs.json</code> e <code>/docs</code>. Use o caminho completo, como <code>/products</code>.</p></aside></div></div>
+      <div class="config-choice-intro"><h3>Como você configurou o projeto?</h3><p>Escolha a opção que respondeu no CLI. O seletor atualiza os exemplos abaixo; a documentação não detecta a escolha automaticamente. A opção OpenAPI é independente.</p></div>
+      <div class="config-picker" role="group" aria-label="Selecione a configuração de banco do tutorial">
+        <button type="button" class="config-tab is-active" data-config-tab="postgres" aria-pressed="true"><span aria-hidden="true">▤</span>Com PostgreSQL</button>
+        <button type="button" class="config-tab" data-config-tab="no-database" aria-pressed="false"><span aria-hidden="true">◌</span>Sem banco de dados</button>
+      </div>
+      <div class="layers-heading"><p class="eyebrow dark-eyebrow">CAMADAS DA APLICAÇÃO</p><h3>Um arquivo, uma responsabilidade.</h3><p>Os cartões são recortes curtos para mostrar o papel de cada arquivo. Mais abaixo há exemplos completos que podem ser copiados. <span data-config-panel="postgres">No fluxo com PostgreSQL, repository acessa o banco.</span><span data-config-panel="no-database" hidden>Sem banco, repository não vem no template; crie um se integrar outra fonte de dados.</span> <a href="#tutorial-products">Siga o passo a passo completo ↓</a></p></div>
+      <div class="layers-grid" data-config-panel="postgres">
+        <article class="layer-card"><div class="file-head"><span>routes/products.route.ts</span><small>HTTP + OpenAPI</small></div><pre><code>const controller = new ProductController(new ProductService(new ProductRepository()));
+export const routePath = '/products';
+router.get('/', controller.list);
+export const openApiPaths = [{
+  method: 'get', path: '/products', summary: 'Lista produtos',
+  responses: { 200: { description: 'Lista de produtos' } },
+}];
+export default router;</code></pre></article>
+        <article class="layer-card"><div class="file-head"><span>controllers/product-controller.ts</span><small>HTTP</small></div><pre><code>export class ProductController {
+  constructor(private service: ProductService) {}
+
+  /** Lista produtos e envia a resposta HTTP. */
+  list = async (_req: Request, res: Response, next: NextFunction): Promise&lt;void&gt; =&gt; {
+    try { res.json({ data: await this.service.list() }); }
+    catch (error) { next(error); }
+  };
+}</code></pre></article>
+        <article class="layer-card"><div class="file-head"><span>services/product-service.ts</span><small>Regras de negócio</small></div><pre><code>export class ProductService {
+  constructor(private repository: ProductRepository) {}
+
+  /** Retorna os produtos disponíveis. */
+  list(): Promise&lt;Product[]&gt; {
+    return this.repository.findAll();
+  }
+}</code></pre></article>
+        <article class="layer-card"><div class="file-head"><span>repositories/product-repository.ts</span><small>PostgreSQL</small></div><pre><code>export class ProductRepository {
+  /** Consulta os produtos persistidos. */
+  async findAll(): Promise&lt;Product[]&gt; {
+    const result = await pool.query&lt;Product&gt;('SELECT id, name, created_at FROM products ORDER BY id');
+    return result.rows.map((row) =&gt; ({ ...row, id: Number(row.id) }));
+  }
+}</code></pre></article>
+      </div>
+      <div class="no-db-layer-note" data-config-panel="no-database" hidden><strong>Sem PostgreSQL, esta camada não vem no template.</strong><p>Se depois conectar uma API externa, Redis ou outro armazenamento, adicione um repository para isolar esse acesso. Para um protótipo sem persistência, o service pode usar dados temporários.</p></div>
+      <div class="tutorial-intro" id="tutorial-products"><p class="eyebrow dark-eyebrow">PASSO A PASSO</p><h3>Do pedido HTTP à resposta.</h3><p>Antes de criar arquivos, entenda o caminho de uma chamada. Depois escolha a trilha que corresponde ao projeto que você gerou. A documentação não consegue detectar a resposta que você escolheu no CLI.</p></div>
+      <div class="tutorial-prereq"><strong>Antes de começar</strong><p>Abra a pasta raiz do projeto no editor. Cada caminho começa nessa pasta. Se um bloco mostrar mais de um arquivo, os comentários identificam onde separar o conteúdo; não cole tudo em um único arquivo. Imports terminados em <code>.js</code> estão corretos em TypeScript neste template. Depois de criar as rotas, reinicie o servidor: elas são descobertas quando a aplicação inicia.</p></div>
+      <div class="request-flow" aria-label="Fluxo de uma requisição pela API">
+        <div><small>1 · URL E JSON</small><b>Cliente</b><span>envia a requisição</span></div><i>→</i>
+        <div><small>2 · CAMINHO</small><b>Route</b><span>seleciona endpoint</span></div><i>→</i>
+        <div><small>3 · FORMATO</small><b>Validação</b><span>Zod ou parser manual</span></div><i>→</i>
+        <div><small>4 · HTTP</small><b>Controller</b><span>lê entrada e responde</span></div><i>→</i>
+        <div><small>5 · DOMÍNIO</small><b>Service</b><span>executa a regra</span></div><i>→</i>
+        <div class="flow-data"><small>6 · DADOS</small><b data-config-panel="postgres">Repository + PostgreSQL</b><b data-config-panel="no-database" hidden>Memória ou fonte externa</b><span>busca ou grava dados</span></div>
+      </div>
+      <div class="tutorial-rules"><article><b>Route</b><p>Define método e caminho, liga validação ao controller. Não escreve SQL.</p></article><article><b>Controller</b><p>Converte HTTP em chamada ao service e escolhe status e formato da resposta.</p></article><article><b>Service</b><p>Implementa a regra do produto sem depender de Express.</p></article><article><b>Repository</b><p>Fala com uma fonte de dados. No template, só existe quando PostgreSQL está habilitado.</p></article></div>
+      <p class="flow-explanation">Quando uma camada falha, ela passa o erro adiante. No Express deste kit, o controller chama <code>next(error)</code> e o middleware global monta a resposta de erro.</p>
+      <div class="tutorial-intro"><h3>Sobre OpenAPI e Zod</h3><p>Os exemplos usam OpenAPI habilitado para mostrar schemas Zod e Swagger. Se escolheu <code>--no-openapi</code>, não importe Zod: mantenha os mesmos arquivos e camadas, mas valide entradas com parsers manuais. O README gerado pelo seu projeto descreve essa opção.</p></div>
+      <section class="config-panel" data-config-panel="postgres" aria-label="Tutorial com PostgreSQL">
+      <p class="config-note">Esta configuração inclui PostgreSQL. Se também escolheu o CRUD inicial, os diretórios <code>models/</code>, <code>schemas/</code>, <code>repositories/</code>, <code>services/</code> e <code>controllers/</code> já existem, e a migration <code>002</code> já está ocupada. Se escolheu <code>--no-crud</code>, crie os diretórios do exemplo com <code>mkdir -p models schemas repositories services controllers</code> e use o próximo número livre para a migration.</p>
+      <ol class="tutorial-steps">
+        <li><div><small>01 · BANCO</small><h4>Crie uma migration</h4><p>Crie <code>databases/migrations/003_create_products.sql</code> ou use o próximo número disponível. A pasta deve conter o SQL da tabela. Não altere migrations já aplicadas.</p><pre><code>CREATE TABLE products (
+  id BIGSERIAL PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);</code></pre></div></li>
+        <li><div><small>02 · MODELO E TIPOS</small><h4>Tipifique os dados persistidos</h4><p>Crie <code>models/product.ts</code>. <code>Product</code> descreve uma resposta já persistida; o body de criação é diferente, pois ainda não tem ID nem data.</p><pre><code>export interface Product {
+  id: number;
+  name: string;
+  created_at: Date | string;
+}</code></pre></div></li>
+        <li><div><small>03 · ZOD</small><h4>Valide e infira o tipo de entrada</h4><p>Crie <code>schemas/product-schemas.ts</code>. O middleware roda antes do controller: body inválido vai ao handler de erros; body válido chega parseado. <code>z.infer</code> reaproveita o mesmo contrato como tipo TypeScript.</p><pre><code>import { z } from 'zod';
+export const createProductSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+}).strict();
+export type CreateProductInput = z.infer&lt;typeof createProductSchema&gt;;
+
+// IDs vindos da URL chegam como texto; converta-os dentro do schema.
+export const productIdSchema = z.object({
+  id: z.coerce.number().int().positive(),
+}).strict();
+export type ProductIdParams = z.infer&lt;typeof productIdSchema&gt;;</code></pre><p class="step-result"><strong>Resultado:</strong> o input é validado e tipado pela mesma definição, sem manter dois contratos separados. <code>z.coerce.number()</code> transforma o parâmetro de URL em number.</p></div></li>
+        <li><div><small>04 · REPOSITORY</small><h4>Escreva SQL parametrizado</h4><p>Crie <code>repositories/product-repository.ts</code>. O repository conhece PostgreSQL e devolve linhas <code>Product</code>, mas não sabe qual URL foi chamada.</p><pre><code>import { pool } from '../databases/postgres.js';
+import type { Product } from '../models/product.js';
+export class ProductRepository {
+  /** Lista produtos ordenados pelo ID. */
+  async findAll(): Promise&lt;Product[]&gt; {
+    const result = await pool.query&lt;Product&gt;(
+      'SELECT id, name, created_at FROM products ORDER BY id',
+    );
+    return result.rows.map((row) =&gt; ({ ...row, id: Number(row.id) }));
+  }
+
+  /** Insere um produto e retorna a linha criada. */
+  async insert(name: string): Promise&lt;Product&gt; {
+    const result = await pool.query&lt;Product&gt;(
+      'INSERT INTO products (name) VALUES ($1) RETURNING id, name, created_at',
+      [name],
+    );
+    const row = result.rows[0]!;
+    return { ...row, id: Number(row.id) };
+  }
+}</code></pre><p class="step-result"><strong>Resultado:</strong> <code>$1</code> envia o texto como parâmetro SQL; não concatene a entrada do usuário na query. O PostgreSQL pode devolver <code>BIGSERIAL</code> como texto, por isso o exemplo converte <code>id</code> para number.</p></div></li>
+        <li><div><small>05 · SERVICE</small><h4>Implemente as regras de negócio</h4><p>Crie <code>services/product-service.ts</code>. O construtor recebe o repository (injeção de dependência). O service não importa Express; nele entram regras do domínio e coordenação de operações.</p><pre><code>import { ProductRepository } from '../repositories/product-repository.js';
+import type { Product } from '../models/product.js';
+
+export class ProductService {
+  /** Recebe a camada de persistência deste recurso. */
+  constructor(private readonly repository: ProductRepository) {}
+
+  /** Delega a listagem ao repository. */
+  list(): Promise&lt;Product[]&gt; {
+    return this.repository.findAll();
+  }
+
+  /** Cria um produto com nome já validado pelo schema. */
+  create(name: string): Promise&lt;Product&gt; {
+    return this.repository.insert(name);
+  }
+}</code></pre></div></li>
+        <li><div><small>06 · CONTROLLER</small><h4>Conecte a camada HTTP ao service</h4><p>Crie <code>controllers/product-controller.ts</code>. O controller recebe objetos do Express, lê o valor já validado, chama o service e escolhe status e JSON. <code>next(error)</code> entrega falhas ao middleware global.</p><pre><code>import type { NextFunction, Request, Response } from 'express';
+import type { CreateProductInput } from '../schemas/product-schemas.js';
+import { ProductService } from '../services/product-service.js';
+
+interface ValidatedLocals {
+  validated: { body?: CreateProductInput };
+}
+
+export class ProductController {
+  /** Recebe as regras de negócio do produto. */
+  constructor(private readonly service: ProductService) {}
+
+  /** Lista produtos e responde em JSON. */
+  list = async (_req: Request, res: Response, next: NextFunction): Promise&lt;void&gt; =&gt; {
+    try { res.json({ data: await this.service.list() }); }
+    catch (error) { next(error); }
+  };
+
+  /** Cria um produto e converte o resultado para HTTP. */
+  create = async (_req: Request, res: Response, next: NextFunction): Promise&lt;void&gt; =&gt; {
+    try {
+      const locals = res.locals as unknown as ValidatedLocals;
+      const { name } = locals.validated.body!;
+      const product = await this.service.create(name);
+      res.status(201).json({ data: product });
+    } catch (error) { next(error); }
+  };
+}</code></pre><p class="step-result"><strong>Resultado:</strong> se a criação der certo, o cliente recebe <code>201 Created</code>; se falhar, a cadeia de erro responde.</p></div></li>
+        <li><div><small>07 · ROUTE + OPENAPI</small><h4>Conecte as camadas e descreva o contrato</h4><p>Crie <code>routes/products.route.ts</code>. A rota monta as dependências. O path <code>'/'</code> é relativo ao prefixo <code>routePath</code>, então forma <code>POST /products</code>. OpenAPI exige o caminho completo.</p><pre><code>import { Router } from 'express';
+import { z } from 'zod';
+import { ProductController } from '../controllers/product-controller.js';
+import { ProductRepository } from '../repositories/product-repository.js';
+import { ProductService } from '../services/product-service.js';
+import { validateRequest } from '../middlewares/validate.js';
+import { createProductSchema } from '../schemas/product-schemas.js';
+
+const router = Router();
+const controller = new ProductController(
+  new ProductService(new ProductRepository()),
+);
+
+/** Prefixo montado pelo carregador de rotas. */
+export const routePath = '/products';
+router.get('/', controller.list);
+router.post('/', validateRequest({ body: createProductSchema }), controller.create);
+
+const productSchema = z.object({
+  id: z.number(), name: z.string(), created_at: z.string().datetime(),
+});
+const productListResponseSchema = z.object({ data: z.array(productSchema) });
+/** Operações que o carregador adiciona ao OpenAPI. */
+export const openApiPaths = [{
+  method: 'get' as const,
+  path: '/products',
+  summary: 'Lista produtos',
+  responses: { 200: { description: 'Lista de produtos', content: {
+    'application/json': { schema: productListResponseSchema },
+  } } },
+}, {
+  method: 'post' as const,
+  path: '/products',
+  summary: 'Cria um produto',
+  request: { body: { required: true, content: { 'application/json': { schema: createProductSchema } } } },
+  responses: { 201: { description: 'Produto criado', content: {
+    'application/json': { schema: z.object({ data: productSchema }) },
+  } } },
+}];
+
+export default router;</code></pre><p>O loader importa arquivos <code>*.route.ts</code> e monta o router. Não edite <code>app.ts</code>. Se a rota responder mas não aparecer no Swagger, confira <code>openApiPaths</code> e o caminho absoluto.</p></div></li>
+        <li><div><small>08 · EXECUÇÃO</small><h4>Rode e compare o resultado</h4><p>Execute <code>npm run migrate</code> e <code>npm run dev</code>. O POST válido deve responder <code>201</code>; depois, o GET deve mostrar o produto em <code>data</code>. Um nome vazio deve receber <code>400</code> pelo Zod. Confira os dois métodos em <code>/docs.json</code> e <code>/docs</code>.</p><pre><code>curl -i -X POST http://localhost:3000/products \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Teclado"}'
+
+curl http://localhost:3000/products
+
+curl -i -X POST http://localhost:3000/products \
+  -H 'Content-Type: application/json' \
+  -d '{"name":""}'</code></pre><p><code>404</code> normalmente indica um caminho/nome de arquivo incorreto. Se a chamada HTTP funciona e Swagger está vazio, faltam ou estão incorretas as definições <code>openApiPaths</code>.</p></div></li>
+      </ol>
+      </section>
+      <section class="config-panel" data-config-panel="no-database" aria-label="Tutorial sem banco de dados" hidden>
+        <p class="config-note">Com <code>--no-database</code>, o projeto não inclui PostgreSQL, migrations nem os diretórios de models, repositories, services e controllers. Crie apenas as camadas de que precisar. Se usar armazenamento em memória, os dados serão perdidos quando o processo reiniciar.</p>
+        <ol class="tutorial-steps">
+          <li><div><small>01 · CONFIGURAÇÃO</small><h4>Gere o projeto sem PostgreSQL</h4><p>Escolha “Não” para PostgreSQL e, se quiser Swagger e Zod, escolha “Sim” para OpenAPI. Pelo terminal, crie e prepare o projeto:</p><pre><code>npx create-api-kit minha-api --no-database --openapi
+cd minha-api
+cp .env.example .env
+npm install
+mkdir -p models schemas services controllers</code></pre><p>Essa opção ainda inclui Express, TypeScript, rotas dinâmicas e, se selecionado, <code>/docs</code> com Zod. Não crie <code>repositories/</code> até ter uma fonte de dados que precise ser isolada.</p></div></li>
+          <li><div><small>02 · TIPOS E ZOD</small><h4>Crie os arquivos do domínio</h4><p>Sem banco, os diretórios de domínio não são gerados. Crie <code>models/product.ts</code> para os dados e <code>schemas/product-schemas.ts</code> para validar a entrada. Use o Zod somente se escolheu OpenAPI.</p><pre><code>// models/product.ts
+export interface Product {
+  id: number;
+  name: string;
+  created_at: string;
+}
+
+// schemas/product-schemas.ts
+import { z } from 'zod';
+export const createProductSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+}).strict();
+export type CreateProductInput = z.infer&lt;typeof createProductSchema&gt;;</code></pre><p><strong>Por quê?</strong> O tipo <code>Product</code> descreve a resposta; o schema e seu tipo descrevem o body recebido.</p></div></li>
+          <li><div><small>03 · SERVICE</small><h4>Escolha de onde vêm os dados</h4><p>Sem PostgreSQL, não há repository SQL. Este service em memória serve para aprender o fluxo ou prototipar; não persiste dados após reiniciar.</p><pre><code>import type { Product } from '../models/product.js';
+
+const products: Product[] = [];
+
+export class ProductService {
+  /** Lista os produtos deste protótipo. */
+  list(): Product[] { return products; }
+
+  /** Cria um produto temporário em memória. */
+  create(name: string): Product {
+    const product = {
+      id: products.length + 1,
+      name,
+      created_at: new Date().toISOString(),
+    };
+    products.push(product);
+    return product;
+  }
+}</code></pre><p>Para dados duráveis, integre uma fonte real e crie um repository para escondê-la do service.</p></div></li>
+          <li><div><small>04 · CONTROLLER</small><h4>Trate a requisição HTTP</h4><p>Crie <code>controllers/product-controller.ts</code>. O cast de <code>res.locals</code> informa ao TypeScript o tipo validado; <code>next(error)</code> passa falhas ao Express.</p><pre><code>import type { NextFunction, Request, Response } from 'express';
+import type { CreateProductInput } from '../schemas/product-schemas.js';
+import { ProductService } from '../services/product-service.js';
+
+interface ValidatedLocals {
+  validated: { body?: CreateProductInput };
+}
+
+export class ProductController {
+  /** Recebe o service deste recurso. */
+  constructor(private readonly service: ProductService) {}
+
+  /** Lista produtos e envia a resposta HTTP. */
+  list = (_req: Request, res: Response): void =&gt; {
+    res.json({ data: this.service.list() });
+  };
+
+  /** Cria um produto e envia a resposta HTTP. */
+  create = async (_req: Request, res: Response, next: NextFunction): Promise&lt;void&gt; =&gt; {
+    try {
+      const locals = res.locals as unknown as ValidatedLocals;
+      const { name } = locals.validated.body!;
+      res.status(201).json({ data: this.service.create(name) });
+    } catch (error) { next(error); }
+  };
+}</code></pre></div></li>
+          <li><div><small>05 · ROUTE + OPENAPI</small><h4>Registre e valide o endpoint</h4><p>Crie <code>routes/products.route.ts</code>. O middleware valida o body antes de chamar o controller. Com OpenAPI habilitado, declare a operação para que ela apareça em <code>/docs</code>.</p><pre><code>import { Router } from 'express';
+import { z } from 'zod';
+import { ProductController } from '../controllers/product-controller.js';
+import { ProductService } from '../services/product-service.js';
+import { validateRequest } from '../middlewares/validate.js';
+import { createProductSchema } from '../schemas/product-schemas.js';
+
+const router = Router();
+const controller = new ProductController(new ProductService());
+
+/** Prefixo montado automaticamente. */
+export const routePath = '/products';
+router.get('/', controller.list);
+router.post('/', validateRequest({ body: createProductSchema }), controller.create);
+
+const productSchema = z.object({
+  id: z.number(), name: z.string(), created_at: z.string().datetime(),
+});
+/** Caminho absoluto documentado no Swagger. */
+export const openApiPaths = [{
+  method: 'get' as const,
+  path: '/products',
+  summary: 'Lista produtos em memória',
+  responses: { 200: { description: 'Lista de produtos', content: {
+    'application/json': { schema: z.object({ data: z.array(productSchema) }) },
+  } } },
+}, {
+  method: 'post' as const,
+  path: '/products',
+  summary: 'Cria um produto',
+  request: { body: { required: true, content: { 'application/json': { schema: createProductSchema } } } },
+  responses: { 201: { description: 'Produto criado', content: {
+    'application/json': { schema: z.object({ data: productSchema }) },
+  } } },
+}];
+export default router;</code></pre><p>Se escolheu <code>--no-openapi</code>, substitua Zod por um parser manual e remova <code>openApiPaths</code>. O arquivo de rota continua funcionando sem Swagger.</p></div></li>
+          <li><div><small>06 · EXECUÇÃO</small><h4>Inicie e confira</h4><p>Rode <code>npm run dev</code>, faça um POST e depois um GET. A lista deve conter o produto enquanto o processo estiver ativo; após reiniciar, ficará vazia. Se OpenAPI foi selecionado, verifique <code>/docs.json</code> e <code>/docs</code>. Sem banco, não rode migrations.</p><pre><code>curl -X POST http://localhost:3000/products \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Teclado"}'
+
+curl http://localhost:3000/products</code></pre></div></li>
+        </ol>
+      </section>
       <div class="crud-box"><div><small>EXEMPLO COM POSTGRES + CRUD</small><h3>O recurso <code>/items</code> demonstra o fluxo todo.</h3><p>Ative-o no prompt do CLI ou com <code>--crud</code>.</p></div><div class="endpoints"><div><b class="get">GET</b><code>/items</code><span>Listar</span></div><div><b class="post">POST</b><code>/items</code><span>Criar</span></div><div><b class="get">GET</b><code>/items/:id</code><span>Consultar</span></div><div><b class="put">PUT</b><code>/items/:id</code><span>Atualizar</span></div><div><b class="delete">DELETE</b><code>/items/:id</code><span>Remover</span></div></div><div class="payload"><small>REQUEST · POST /items</small><code>{ "name": "Meu primeiro item" }</code></div></div>
       <div class="curl-sample"><div><small>TESTE PELO TERMINAL · CRUD HABILITADO</small><p>Envie uma requisição e veja a resposta da API.</p></div><pre><code>curl -X POST http://localhost:3000/items \
   -H 'Content-Type: application/json' \

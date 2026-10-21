@@ -42,7 +42,7 @@ npm run dev
 <!-- OPENAPI_ONLY_START -->
 3. Abra [http://localhost:3000/docs](http://localhost:3000/docs) no navegador. A interface Swagger UI lista as operações disponíveis.
 4. Expanda uma rota, selecione **Try it out**, informe parâmetros ou JSON e clique em **Execute**. A resposta HTTP aparece na própria página, sem precisar instalar um cliente separado.
-5. Para desenvolver, adicione schemas em `schemas/`, implemente as camadas da aplicação e registre a operação em `openapi.ts`. Reinicie o servidor de desenvolvimento e atualize `/docs`.
+5. Para desenvolver, adicione schemas em `schemas/`, implemente as camadas e exporte `openApiPaths` no arquivo de rota. O carregador agrega essas operações antes de montar `/docs` e `/docs.json`.
 <!-- OPENAPI_ONLY_END -->
 <!-- NO_OPENAPI_START -->
 3. A API inicia sem OpenAPI, Swagger UI ou Zod. Valide entradas com parsers manuais em `schemas/`.
@@ -113,7 +113,7 @@ Toda função, método, getter, setter e callback nomeado deve ter um comentári
 
 ### Adicionar e registrar rotas dinamicamente
 
-O carregador procura automaticamente arquivos `*.route.ts` dentro de `routes/` (em produção, `*.route.js`). Cada arquivo deve exportar `routePath` e um router como exportação padrão. Assim, não é necessário editar `app.ts` para montar um novo router.
+O carregador procura automaticamente arquivos `*.route.ts` dentro de `routes/` (em produção, `*.route.js`). Cada arquivo deve exportar `routePath` e um router como exportação padrão. Assim, não é necessário editar `app.ts` para montar um novo router. Para o Swagger, exporte também `openApiPaths`: o servidor agrega essas definições ao documento automaticamente durante a inicialização. O Express não infere schemas, parâmetros e respostas a partir dos handlers, então descreva cada operação explicitamente.
 
 Exemplo de `routes/products.route.ts`:
 
@@ -132,21 +132,215 @@ function listProducts(_req: Request, res: Response): void {
 
 router.get('/', listProducts);
 
+/** Documenta as operações deste router no OpenAPI quando a feature estiver habilitada. */
+export const openApiPaths = [{
+  method: 'get',
+  path: '/products',
+  summary: 'Lista os produtos disponíveis',
+  responses: { 200: { description: 'Lista de produtos' } },
+}];
+
+
 export default router;
 ```
 
+Use o caminho completo da API (`/products`), não o caminho relativo do router (`/`). Essa propriedade é ignorada em projetos gerados sem OpenAPI. Depois de adicionar ou alterar `openApiPaths`, reinicie `npm run dev` e confira `/docs.json` ou atualize `/docs`.
+
+<!-- OPENAPI_ONLY_START -->
 <!-- CRUD_ONLY_START -->
-### Adicionar um recurso em camadas
+### Tutorial: adicionar um recurso do início ao fim
 
-1. Crie a entidade em `models/` com propriedades privadas e getters/setters para validar invariantes.
-2. Defina os schemas ou parsers de entrada em `schemas/` e crie um repository em `repositories/` para concentrar as consultas SQL.
-3. Implemente as regras e transações no service. Use `getClient()` e garanta `COMMIT`, `ROLLBACK` e `release()`; o `ItemService` mostra esse padrão.
-4. Crie um controller que consome o service sem conhecer SQL, e registre os endpoints e parsers/schemas em `routes/`.
-5. Monte as dependências no arquivo de rota, como em `routes/items.route.ts`. O carregador registra o router automaticamente antes dos handlers finais de 404 e erro.
-6. Para mudanças no banco, adicione uma migration SQL numerada em `databases/migrations/`. Não altere migrations já aplicadas em ambientes compartilhados.
+O exemplo abaixo cria `products` com `GET /products` e `POST /products`. Abra a raiz do projeto no editor. Cada caminho começa nessa pasta e cada bloco vai somente no arquivo citado no passo. Os imports que terminam em `.js` são intencionais: o TypeScript deste template os resolve para os arquivos `.ts`. O carregador encontra as rotas ao iniciar; não edite `app.ts`.
 
-Evite colocar regras de negócio em routes/controllers, consultas SQL em services, ou lógica HTTP em models/repositories. Essa separação mantém cada camada fácil de revisar e substituir.
+#### Como uma requisição atravessa as camadas
+
+```text
+Cliente HTTP → route → Zod/validateRequest → controller → service → repository → PostgreSQL
+     ↑                                                                              ↓
+     └──────────────────── response JSON / status HTTP ────────────────────────────┘
+```
+
+`route` escolhe método e caminho; `validateRequest` rejeita dados inválidos antes de chamar o controller; `controller` traduz HTTP para uma chamada de service; `service` executa regras do domínio; `repository` executa SQL. A resposta percorre o caminho inverso. Se uma etapa falhar, `next(error)` entrega o erro ao middleware global.
+
+#### 1. Crie a tabela
+
+Adicione uma migration com o próximo número livre em `databases/migrations/`, por exemplo `003_create_products.sql` (o template já usa `002` para `items`):
+
+```sql
+CREATE TABLE IF NOT EXISTS products (
+  id BIGSERIAL PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+No desenvolvimento local, rode `npm run migrate`. Com Docker Compose, execute `docker compose up --build` para reconstruir e iniciar a API; o comando de inicialização aplica migrations antes de iniciar o servidor. Não edite uma migration que já foi aplicada em outro ambiente.
+
+#### 2. Defina o tipo da linha do banco
+
+Crie `models/product.ts`. O tipo representa os dados retornados pelo PostgreSQL; os tipos de entrada da API serão inferidos do Zod no próximo passo.
+
+```ts
+export interface Product {
+  id: number;
+  name: string;
+  created_at: Date | string;
+}
+```
+
+#### 3. Valide entradas e infira tipos com Zod
+
+Crie `schemas/product-schemas.ts`. `z.infer` mantém o tipo TypeScript alinhado com a validação: não declare outro tipo manual para o mesmo body. `trim`, `min` e `max` também normalizam e restringem o texto recebido.
+
+```ts
+import { z } from 'zod';
+
+export const createProductSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+}).strict();
+
+export type CreateProductInput = z.infer<typeof createProductSchema>;
+```
+
+Para parâmetros, defina outro schema e infira seu tipo: `const productIdSchema = z.object({ id: z.coerce.number().int().positive() }).strict();` e `type ProductIdParams = z.infer<typeof productIdSchema>;`. `z.coerce.number()` converte o `id` textual do URL para `number` depois da validação.
+
+#### 4. Implemente o repository
+
+Crie `repositories/product-repository.ts`. Esta camada conhece SQL e PostgreSQL, mas não Express nem regras HTTP.
+
+```ts
+import { pool } from '../databases/postgres.js';
+import type { Product } from '../models/product.js';
+
+export class ProductRepository {
+  /** Lista os produtos persistidos. */
+  async findAll(): Promise<Product[]> {
+    const result = await pool.query<Product>(
+      'SELECT id, name, created_at FROM products ORDER BY id',
+    );
+    return result.rows.map((row) => ({ ...row, id: Number(row.id) }));
+  }
+
+  /** Insere um produto e retorna a linha criada pelo PostgreSQL. */
+  async insert(name: string): Promise<Product> {
+    const result = await pool.query<Product>(
+      'INSERT INTO products (name) VALUES ($1) RETURNING id, name, created_at',
+      [name],
+    );
+    const row = result.rows[0]!;
+    return { ...row, id: Number(row.id) };
+  }
+}
+```
+
+Use parâmetros `$1`, `$2` nas consultas; não concatene valores recebidos em strings SQL. O PostgreSQL pode devolver uma coluna `BIGSERIAL` como texto, por isso o exemplo converte `id` para `number`. Se uma operação precisar de várias queries atômicas, receba um `PoolClient` no repository e coordene `BEGIN`, `COMMIT`, `ROLLBACK` e `release()` no service, como em `ItemService`.
+
+#### 5. Coloque as regras no service
+
+Crie `services/product-service.ts`. O service orquestra o repository e aplica regras do domínio; ele não recebe `Request` ou `Response`.
+
+```ts
+import { ProductRepository } from '../repositories/product-repository.js';
+import type { Product } from '../models/product.js';
+
+export class ProductService {
+  /** Recebe o acesso a dados usado pelas operações de produto. */
+  constructor(private readonly repository: ProductRepository) {}
+
+  /** Lista os produtos disponíveis. */
+  list(): Promise<Product[]> {
+    return this.repository.findAll();
+  }
+
+  /** Cria um produto com o nome já validado pelo schema de entrada. */
+  create(name: string): Promise<Product> {
+    return this.repository.insert(name);
+  }
+}
+```
+
+#### 6. Traduza HTTP para chamadas do service no controller
+
+Crie `controllers/product-controller.ts`. O middleware `validateRequest` coloca os dados parseados em `res.locals.validated`; o controller usa o tipo inferido de Zod. Erros seguem para o handler global com `next(error)`.
+
+```ts
+import type { NextFunction, Request, Response } from 'express';
+import type { CreateProductInput } from '../schemas/product-schemas.js';
+import { ProductService } from '../services/product-service.js';
+
+interface ProductLocals {
+  validated: { body?: CreateProductInput };
+}
+
+export class ProductController {
+  /** Recebe as regras de negócio usadas pelo controller. */
+  constructor(private readonly service: ProductService) {}
+
+  /** Lista produtos e responde no formato público da API. */
+  list = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try { res.json({ data: await this.service.list() }); }
+    catch (error) { next(error); }
+  };
+
+  /** Cria um produto a partir do body validado e responde com status 201. */
+  create = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { name } = (res.locals as unknown as ProductLocals).validated.body!;
+      res.status(201).json({ data: await this.service.create(name) });
+    } catch (error) { next(error); }
+  };
+}
+```
+
+#### 7. Monte a rota, aplique Zod e documente OpenAPI
+
+Crie `routes/products.route.ts`. O prefixo `routePath` e os caminhos relativos do router definem a URL Express. `openApiPaths` descreve a mesma operação para Swagger; escreva o caminho completo (`/products`). Inclua schemas de request/response para que Swagger mostre os formatos.
+
+```ts
+import { Router } from 'express';
+import { ProductController } from '../controllers/product-controller.js';
+import { ProductRepository } from '../repositories/product-repository.js';
+import { ProductService } from '../services/product-service.js';
+import { validateRequest } from '../middlewares/validate.js';
+import { createProductSchema } from '../schemas/product-schemas.js';
+import { z } from 'zod';
+
+const router = Router();
+const controller = new ProductController(new ProductService(new ProductRepository()));
+
+/** Prefixo usado pelo carregador para montar as rotas deste recurso. */
+export const routePath = '/products';
+
+router.get('/', controller.list);
+router.post('/', validateRequest({ body: createProductSchema }), controller.create);
+
+const productResponseSchema = z.object({
+  data: z.object({ id: z.number(), name: z.string(), created_at: z.string().datetime() }),
+});
+
+/** Operações deste router exibidas no Swagger quando OpenAPI está habilitado. */
+export const openApiPaths = [
+  {
+    method: 'get', path: '/products', summary: 'Lista produtos',
+    responses: { 200: { description: 'Lista de produtos', content: { 'application/json': { schema: z.object({ data: z.array(productResponseSchema.shape.data) }) } } } },
+  },
+  {
+    method: 'post', path: '/products', summary: 'Cria um produto',
+    request: { body: { required: true, content: { 'application/json': { schema: createProductSchema } } } },
+    responses: { 201: { description: 'Produto criado', content: { 'application/json': { schema: productResponseSchema } } } },
+  },
+];
+
+export default router;
+```
+
+#### 8. Inicie e confira cada camada
+
+Rode `npm run dev`. Teste `GET http://localhost:3000/products` e envie `POST http://localhost:3000/products` com `Content-Type: application/json` e body `{ "name": "Teclado" }`. O GET responde com uma lista em `data`; o POST deve responder com status 201 e o produto criado em `data`. Confira `/docs.json` para verificar se `GET /products` e `POST /products` aparecem; depois abra `/docs`, atualize a página e use **Try it out**. Se receber 404, confira nome e pasta `routes/products.route.ts`. Se a rota responder mas não aparecer no Swagger, confira `openApiPaths`, o caminho completo e os schemas de request/response; reinicie o processo para recarregar o módulo da rota.
+
+O fluxo fica `route → validateRequest/Zod → controller → service → repository → PostgreSQL`; a resposta volta pelo controller. Rotas não contêm SQL, services não conhecem HTTP, repositories não decidem status HTTP, e controllers não implementam regras de negócio.
 <!-- CRUD_ONLY_END -->
+<!-- OPENAPI_ONLY_END -->
 
 O handler de erros usa `{ "error": { "message": "...", "code": "ERR_CODE" } }`. Erros inesperados retornam mensagem genérica em produção. Use `next(error)` nas rotas assíncronas para encaminhar falhas ao handler.
 

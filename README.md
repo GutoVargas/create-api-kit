@@ -35,7 +35,7 @@ With PostgreSQL, projects include SQL migrations, a request journal, secure head
 
 OpenAPI-enabled projects expose Swagger UI at `http://localhost:3000/docs` and the specification at `/docs.json`. Projects generated without OpenAPI omit Swagger and Zod dependencies; when CRUD is enabled they use manual parsers for its inputs. Projects without PostgreSQL omit database modules and expose `GET /health` with `database: not_configured`.
 
-Routes are discovered from `routes/*.route.ts` during development and `routes/*.route.js` after compilation. Each module exports `routePath` and a router as its default export, so adding a router does not require editing `app.ts`. When OpenAPI is enabled, document new operations in `openapi.ts` as well.
+Routes are discovered from `routes/*.route.ts` during development and `routes/*.route.js` after compilation. Each module exports `routePath` and a router as its default export, so adding a router does not require editing `app.ts`. When OpenAPI is enabled, also export `openApiPaths` from the route module; the server aggregates these definitions into `/docs` and `/docs.json` during startup. Express cannot infer parameters, schemas, and responses from handlers, so describe each operation explicitly.
 
 ## Development
 
